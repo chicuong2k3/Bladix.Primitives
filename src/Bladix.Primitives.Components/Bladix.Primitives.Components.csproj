@@ -16,7 +16,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Accordion\" />
     <Folder Include="Tooltip\" />
     <Folder Include="wwwroot\" />
   </ItemGroup>

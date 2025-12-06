@@ -1,0 +1,10 @@
+﻿<AccordionRoot Type="AccordionType.Multiple" @ref="@_accordionRef">
+    @ChildContent
+</AccordionRoot>
+
+@code {
+    [Parameter] public AccordionType Type { get; set; } = AccordionType.Single;
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private ElementReference _accordionRef;
+}

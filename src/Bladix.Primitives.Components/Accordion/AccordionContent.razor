@@ -1,0 +1,15 @@
+﻿
+
+@if (Item.IsOpen)
+{
+    <div class="accordion-content" @ref="@_contentRef">
+        @ChildContent
+    </div>
+}
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [CascadingParameter] public AccordionItem Item { get; set; } = default!;
+
+    private ElementReference _contentRef;
+}

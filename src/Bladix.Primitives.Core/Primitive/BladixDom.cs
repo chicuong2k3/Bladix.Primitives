@@ -10,9 +10,9 @@ namespace Bladix.Primitives.Core.Primitive
         public BladixDom(IJSRuntime js) => _js = js;
 
         public ValueTask<bool> CanUseDOM()
-            => _js.InvokeAsync<bool>("bladix.dom.canUseDOM");
+            => _js.InvokeAsync<bool>("dom.canUseDOM");
 
         public ValueTask<ElementReference?> GetActiveElement(bool activeDescendant = false)
-            => _js.InvokeAsync<ElementReference?>("bladix.dom.getActiveElement", null, activeDescendant);
+            => _js.InvokeAsync<ElementReference?>("dom.getActiveElement", null, activeDescendant);
     }
 }

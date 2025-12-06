@@ -1,0 +1,16 @@
+﻿
+
+<div class="accordion-item">
+    @ChildContent
+</div>
+
+@code {
+    [Parameter] public string Value { get; set; } = default!;
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    [CascadingParameter] private AccordionState State { get; set; } = default!;
+
+    public bool IsOpen => State.IsItemOpen(Value);
+
+    public async Task ToggleAsync() => await State.ToggleItemAsync(Value);
+}

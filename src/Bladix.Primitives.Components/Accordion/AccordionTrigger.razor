@@ -1,0 +1,14 @@
+﻿
+<button class="accordion-trigger" @onclick="ToggleItemAsync">
+    @ChildContent
+</button>
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [CascadingParameter] public AccordionItem Item { get; set; } = default!;
+
+    private async Task ToggleItemAsync()
+    {
+        await Item.ToggleAsync();
+    }
+}

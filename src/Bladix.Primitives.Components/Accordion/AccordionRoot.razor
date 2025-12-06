@@ -1,0 +1,40 @@
+﻿@typeparam TItem
+
+<CascadingValue Value="@_state">
+    <div @ref="@_rootRef" tabindex="0" @onkeydown="HandleKeyDown">
+        @ChildContent
+    </div>
+</CascadingValue>
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public AccordionType Type { get; set; } = AccordionType.Single;
+
+    [Parameter] public string? Value { get; set; }
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    [Parameter] public List<string>? Values { get; set; }
+    [Parameter] public EventCallback<List<string>> ValuesChanged { get; set; }
+
+    private ElementReference _rootRef;
+    private AccordionState _state = new AccordionState();
+
+    protected override void OnInitialized()
+    {
+        _state.Type = Type;
+        if (Type == AccordionType.Single)
+            _state.SingleValue = Value;
+        else
+            _state.MultipleValues = Values ?? new List<string>();
+
+        _state.OnSingleValueChange = EventCallback.Factory.Create<string>(this, v => ValueChanged.InvokeAsync(v));
+        _state.OnMultipleValuesChange = EventCallback.Factory.Create<List<string>>(this, v => ValuesChanged.InvokeAsync(v));
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "ArrowDown")
+            await BladixDom.FocusNextAsync(_rootRef);
+        else if (e.Key == "ArrowUp")
+            await BladixDom.FocusPrevAsync(_rootRef);
+    }
+}
