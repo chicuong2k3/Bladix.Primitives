@@ -1,0 +1,17 @@
+<Solution>
+  <Folder Name="/docs/" />
+  <Folder Name="/docs/Components/" />
+  <Folder Name="/docs/Guides/">
+    <File Path="Animation.md" />
+    <File Path="Composition.md" />
+    <File Path="Styling.md" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/Bladix.Primitives.Components/Bladix.Primitives.Components.csproj" Id="90577dcc-a1a4-4ef4-8e79-65e7426e6de2" />
+    <Project Path="src/Bladix.Primitives.Core/Bladix.Primitives.Core.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Bladix.Primitives.Components.Tests/Bladix.Primitives.Components.Tests.csproj" Id="9b793bd8-b557-40f2-92d1-d816bfcfef2a" />
+    <Project Path="tests/Bladix.Primitives.Core.Tests/Bladix.Primitives.Core.Tests.csproj" Id="90434b50-2052-44fa-8142-170a5b065c43" />
+  </Folder>
+</Solution>
