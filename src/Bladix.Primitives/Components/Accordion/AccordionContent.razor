@@ -1,0 +1,44 @@
+@inherits BladixComponentBase
+
+@if (Item?.IsOpen == true || ForceMount)
+{
+    @if (AsChild)
+    {
+        @ChildContent
+    }
+    else
+    {
+        @*
+           Renders content panel with:
+           - id: links back to trigger's aria-controls
+           - role="region": semantic landmark for assistive tech
+           - aria-labelledby: references the trigger for accessible name
+           - hidden: controls visibility (for CSS animations when ForceMount=true)
+           - data-state: for CSS-based animations and styling
+        *@
+        <div @attributes="AdditionalAttributes"
+             id="@($"accordion-content-{Item?.Value}")"
+             role="region"
+             aria-labelledby="@($"accordion-header-{Item?.Value}")"
+             data-state="@(Item?.IsOpen == true ? "open" : "closed")"
+             data-disabled="@((Item?.Disabled == true || Root?.Disabled == true) ? "true" : null)"
+             data-orientation="@Root?.Orientation.ToString().ToLowerInvariant()"
+             hidden="@(Item?.IsOpen != true && !ForceMount)"
+             class="@Class"
+             @ref="ElementRef">
+            @ChildContent
+        </div>
+    }
+}
+
+@code {
+    [CascadingParameter] public AccordionRoot? Root { get; set; }
+    [CascadingParameter] public AccordionItem? Item { get; set; }
+
+    /// <summary>
+    /// When true, forces the content to always be present in DOM. 
+    /// Useful for controlling animations with CSS.
+    /// </summary>
+    [Parameter] public bool ForceMount { get; set; }
+
+}

@@ -1,0 +1,162 @@
+@inherits BladixComponentBase
+
+@if (AsChild)
+{
+    <CascadingValue Value="this" IsFixed="true">
+        @ChildContent
+    </CascadingValue>
+}
+else
+{
+    <div @attributes="AdditionalAttributes"
+         data-orientation="@Orientation.ToString().ToLowerInvariant()"
+         class="@Class"
+         @ref="ElementRef">
+        <CascadingValue Value="this" IsFixed="true">
+            @ChildContent
+        </CascadingValue>
+    </div>
+}
+
+@code {
+    private HashSet<string> _openItems = new();
+    private readonly List<AccordionTrigger> _triggers = new();
+
+    [Parameter] public AccordionType Type { get; set; } = AccordionType.Single;
+    [Parameter] public bool Collapsible { get; set; } = false;
+    [Parameter] public string? Value { get; set; }
+    [Parameter] public EventCallback<string?> ValueChanged { get; set; }
+    [Parameter] public EventCallback<string[]?> ValuesChanged { get; set; }
+    [Parameter] public string[]? DefaultValue { get; set; }
+    [Parameter] public Orientation Orientation { get; set; } = Orientation.Vertical;
+    [Parameter] public bool Disabled { get; set; }
+    [Parameter] public Direction Dir { get; set; } = Direction.Ltr;
+    
+    protected override void OnInitialized()
+    {
+        if (Type == AccordionType.Single)
+        {
+            if (!string.IsNullOrEmpty(Value))
+            {
+                _openItems.Add(Value);
+            }
+            else if (DefaultValue?.Length > 0)
+            {
+                _openItems.Add(DefaultValue[0]);
+            }
+        }
+        else if (Type == AccordionType.Multiple && DefaultValue != null)
+        {
+            foreach (string item in DefaultValue)
+            {
+                _openItems.Add(item);
+            }
+        }
+    }
+
+    public bool IsItemOpen(string itemValue) => _openItems.Contains(itemValue);
+
+    public async Task ToggleItem(string itemValue)
+    {
+        if (Disabled) return;
+
+        if (Type == AccordionType.Single)
+        {
+            if (_openItems.Contains(itemValue))
+            {
+                if (Collapsible)
+                {
+                    _openItems.Clear();
+                    await ValueChanged.InvokeAsync(null);
+                }
+            }
+            else
+            {
+                _openItems.Clear();
+                _openItems.Add(itemValue);
+                await ValueChanged.InvokeAsync(itemValue);
+            }
+        }
+        else 
+        {
+            if (_openItems.Contains(itemValue))
+            {
+                _openItems.Remove(itemValue);
+            }
+            else
+            {
+                _openItems.Add(itemValue);
+            }
+
+            // Emit both string and array formats for Multiple type
+            var openItemsArray = _openItems.ToArray();
+            await ValueChanged.InvokeAsync(string.Join(",", openItemsArray));
+            await ValuesChanged.InvokeAsync(openItemsArray);
+        }
+
+        StateHasChanged();
+    }
+
+    public void RegisterTrigger(AccordionTrigger trigger)
+    {
+        if (!_triggers.Contains(trigger))
+        {
+            _triggers.Add(trigger);
+        }
+    }
+
+    public void UnregisterTrigger(AccordionTrigger trigger)
+    {
+        _triggers.Remove(trigger);
+    }
+
+    public AccordionTrigger? GetNextTrigger(AccordionTrigger current)
+    {
+        int currentIndex = _triggers.IndexOf(current);
+        if (currentIndex == -1) return null;
+
+        for (int i = currentIndex + 1; i < _triggers.Count; i++)
+        {
+            if (!_triggers[i].IsDisabled)
+                return _triggers[i];
+        }
+
+        for (int i = 0; i < currentIndex; i++)
+        {
+            if (!_triggers[i].IsDisabled)
+                return _triggers[i];
+        }
+
+        return null;
+    }
+
+    public AccordionTrigger? GetPreviousTrigger(AccordionTrigger current)
+    {
+        int currentIndex = _triggers.IndexOf(current);
+        if (currentIndex == -1) return null;
+
+        for (int i = currentIndex - 1; i >= 0; i--)
+        {
+            if (!_triggers[i].IsDisabled)
+                return _triggers[i];
+        }
+
+        for (int i = _triggers.Count - 1; i > currentIndex; i--)
+        {
+            if (!_triggers[i].IsDisabled)
+                return _triggers[i];
+        }
+
+        return null;
+    }
+
+    public AccordionTrigger? GetFirstTrigger()
+    {
+        return _triggers.FirstOrDefault(t => !t.IsDisabled);
+    }
+
+    public AccordionTrigger? GetLastTrigger()
+    {
+        return _triggers.LastOrDefault(t => !t.IsDisabled);
+    }
+}

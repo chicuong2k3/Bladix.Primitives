@@ -1,0 +1,199 @@
+@inject IJSRuntime JSRuntime
+@inherits BladixComponentBase
+@implements IAsyncDisposable
+
+@if (AsChild)
+{
+    @ChildContent
+}
+else
+{
+    <button type="button"
+            id="@_triggerId"
+            @attributes="AdditionalAttributes"
+            @onclick="HandleClick"
+            @onkeydown="HandleKeyDown"
+            aria-expanded="@(Item?.IsOpen == true ? "true" : "false")"
+            aria-controls="@($"accordion-content-{Item?.Value}")"
+            data-state="@(Item?.IsOpen == true ? "open" : "closed")"
+            data-disabled="@(_isDisabled ? "true" : null)"
+            data-orientation="@Root?.Orientation.ToString().ToLowerInvariant()"
+            disabled="@_isDisabled"
+            class="@Class"
+            @ref="ElementRef">
+        @ChildContent
+    </button>
+}
+
+@code {
+    private bool _isDisabled;
+    private string _triggerId = $"accordion-trigger-{Guid.NewGuid():N}";
+    private BladixDom? _bladixDom;
+    private AccordionKeyboard? _accordionKeyboard;
+
+    public bool IsDisabled => _isDisabled;
+
+    [CascadingParameter] public AccordionRoot? Root { get; set; }
+    [CascadingParameter] public AccordionItem? Item { get; set; }
+
+    protected override void OnInitialized()
+    {
+        _bladixDom = new BladixDom(JSRuntime);
+        _accordionKeyboard = new AccordionKeyboard(JSRuntime);
+        Root?.RegisterTrigger(this);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !_isDisabled && Root != null)
+        {
+            try
+            {
+                // Setup keyboard navigation with preventDefault via AccordionKeyboard wrapper
+                await _accordionKeyboard!.SetupKeyboardNavigation(
+                    ElementRef, 
+                    Root.Orientation
+                );
+            }
+            catch (JSException)
+            {
+                // Silently handle JS errors during prerendering
+            }
+            catch (InvalidOperationException)
+            {
+                // Handle cases where JSRuntime is not available
+            }
+        }
+    }
+
+    protected override void OnParametersSet()
+    {
+        _isDisabled = (Item?.Disabled == true || Root?.Disabled == true);
+    }
+
+    private async Task HandleClick(MouseEventArgs e)
+    {
+        if (!_isDisabled)
+        {
+            await Item?.Toggle()!;
+        }
+    }
+
+    /// <summary>
+    /// Handles keyboard navigation for accordion triggers.
+    /// Vertical: ArrowUp/ArrowDown/Home/End
+    /// Horizontal: ArrowLeft/ArrowRight/Home/End (with RTL support)
+    /// preventDefault is handled by AccordionKeyboard via JS module
+    /// </summary>
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (_isDisabled || Root == null) return;
+
+        bool isVertical = Root.Orientation == Orientation.Vertical;
+        bool isRtl = Root.Dir == Direction.Rtl;
+
+        switch (e.Key)
+        {
+            case "ArrowDown" when isVertical:
+            case "ArrowRight" when !isVertical && !isRtl:
+            case "ArrowLeft" when !isVertical && isRtl:
+                await FocusNextTrigger();
+                break;
+
+            case "ArrowUp" when isVertical:
+            case "ArrowLeft" when !isVertical && !isRtl:
+            case "ArrowRight" when !isVertical && isRtl:
+                await FocusPreviousTrigger();
+                break;
+
+            case "Home":
+                await FocusFirstTrigger();
+                break;
+
+            case "End":
+                await FocusLastTrigger();
+                break;
+        }
+    }
+
+    private async Task FocusNextTrigger()
+    {
+        if (Root == null) return;
+        
+        var nextTrigger = Root.GetNextTrigger(this);
+        if (nextTrigger != null)
+        {
+            await FocusTrigger(nextTrigger);
+        }
+    }
+
+    private async Task FocusPreviousTrigger()
+    {
+        if (Root == null) return;
+        
+        var previousTrigger = Root.GetPreviousTrigger(this);
+        if (previousTrigger != null)
+        {
+            await FocusTrigger(previousTrigger);
+        }
+    }
+
+    private async Task FocusFirstTrigger()
+    {
+        if (Root == null) return;
+        
+        var firstTrigger = Root.GetFirstTrigger();
+        if (firstTrigger != null)
+        {
+            await FocusTrigger(firstTrigger);
+        }
+    }
+
+    private async Task FocusLastTrigger()
+    {
+        if (Root == null) return;
+        
+        var lastTrigger = Root.GetLastTrigger();
+        if (lastTrigger != null)
+        {
+            await FocusTrigger(lastTrigger);
+        }
+    }
+
+    /// <summary>
+    /// Focuses a trigger element using BladixDom utility.
+    /// </summary>
+    private async Task FocusTrigger(AccordionTrigger trigger)
+    {
+        if (_bladixDom == null) return;
+
+        try
+        {
+            await _bladixDom.Focus(trigger.ElementRef, preventScroll: false);
+        }
+        catch (JSException)
+        {
+            // Silently handle JS errors (e.g., element not found, disposed, or during prerendering)
+        }
+        catch (InvalidOperationException)
+        {
+            // Handle cases where JSRuntime is not available (e.g., prerendering)
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        Root?.UnregisterTrigger(this);
+
+        // Cleanup keyboard event listeners via wrapper
+        if (_accordionKeyboard != null)
+        {
+            await _accordionKeyboard.DisposeAsync();
+        }
+        
+        if (_bladixDom != null)
+        {
+            await _bladixDom.DisposeAsync();
+        }
+    }
+}

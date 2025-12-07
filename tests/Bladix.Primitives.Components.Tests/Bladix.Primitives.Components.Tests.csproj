@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Razor">
 
 	<PropertyGroup>
-		<TargetFramework>net9.0</TargetFramework>
+		<TargetFramework>net10.0</TargetFramework>
 		<Nullable>enable</Nullable>
 		<IsPackable>false</IsPackable>
 	</PropertyGroup>
@@ -31,7 +31,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\..\src\Bladix.Primitives.Components\Bladix.Primitives.Components.csproj" />
+	  <ProjectReference Include="..\..\src\Bladix.Primitives\Bladix.Primitives.csproj" />
 	</ItemGroup>
 
 

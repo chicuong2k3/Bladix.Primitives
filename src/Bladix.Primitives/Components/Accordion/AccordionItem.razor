@@ -1,0 +1,64 @@
+@inherits BladixComponentBase
+
+@*
+   AccordionItem wraps Collapsible.Root
+   - Each item manages its own collapsed/expanded state via context from Root
+   - Renders data-state attribute for styling
+   - Passes value prop to identify this item
+*@
+
+@if (AsChild)
+{
+    <CascadingValue Value="this" IsFixed="true">
+        @ChildContent
+    </CascadingValue>
+}
+else
+{
+    @*
+       Renders <div> with:
+       - data-state: "open" | "closed" for CSS targeting
+       - data-disabled: present when disabled
+       - data-orientation: inherited from Root
+    *@
+    <div @attributes="AdditionalAttributes"
+         data-state="@(_isOpen ? "open" : "closed")"
+         data-disabled="@(Disabled ? "true" : null)"
+         data-orientation="@Root?.Orientation.ToString().ToLowerInvariant()"
+         class="@Class"
+         @ref="ElementRef">
+        <CascadingValue Value="this" IsFixed="true">
+            @ChildContent
+        </CascadingValue>
+    </div>
+}
+
+@code {
+    private bool _isOpen;
+
+    [CascadingParameter] public AccordionRoot? Root { get; set; }
+    
+    // Unique identifier for this item
+    // Used by Root to track which items are open
+    [Parameter] public string Value { get; set; } = string.Empty;
+    
+    // When true, prevents this specific item from being interactive
+    [Parameter] public bool Disabled { get; set; }
+    
+    public bool IsOpen => _isOpen;
+
+    protected override void OnParametersSet()
+    {
+        if (Root != null)
+        {
+            _isOpen = Root.IsItemOpen(Value);
+        }
+    }
+
+    // Radix UI: Internal method called by Trigger to toggle this item
+    public async Task Toggle()
+    {
+        if (Disabled || Root?.Disabled == true) return;
+        await Root?.ToggleItem(Value)!;
+    }
+}

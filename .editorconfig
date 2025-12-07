@@ -1,0 +1,90 @@
+root = true
+
+# ------------------------
+# General
+# ------------------------
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+max_line_length = 120
+
+# ------------------------
+# C# files
+# ------------------------
+[*.cs]
+
+indent_style = space
+indent_size = 4
+
+# Private fields start with _
+dotnet_naming_rule.private_fields_underscore.severity = suggestion
+dotnet_naming_rule.private_fields_underscore.symbols = private_fields
+dotnet_naming_rule.private_fields_underscore.style = prefix_underscore
+
+dotnet_naming_symbols.private_fields.applicable_kinds = field
+dotnet_naming_symbols.private_fields.applicable_accessibilities = private
+
+dotnet_naming_style.prefix_underscore.required_prefix = _
+dotnet_naming_style.prefix_underscore.capitalization = camel_case
+
+# EventCallback naming: end with 'Changed'
+dotnet_naming_rule.eventcallback_suffix.severity = suggestion
+dotnet_naming_rule.eventcallback_suffix.symbols = eventcallback_fields
+dotnet_naming_rule.eventcallback_suffix.style = suffix_callback
+
+dotnet_naming_symbols.eventcallback_fields.applicable_kinds = property
+dotnet_naming_symbols.eventcallback_fields.applicable_accessibilities = public
+
+dotnet_naming_style.suffix_callback.required_suffix = "Changed"
+dotnet_naming_style.suffix_callback.capitalization = pascal_case
+
+# File-scoped namespaces
+csharp_style_namespace_declarations = file_scoped:suggestion
+
+# Prefer explicit type instead of var
+csharp_style_var_for_built_in_types = false:suggestion
+csharp_style_var_when_type_is_apparent = false:suggestion
+csharp_style_var_elsewhere = false:suggestion
+
+# ------------------------
+# Razor files
+# ------------------------
+[*.razor]
+indent_style = space
+indent_size = 4
+trim_trailing_whitespace = true
+insert_final_newline = true
+max_line_length = 120
+
+# Component naming convention
+# Example: Button.razor, ButtonIcon.razor, DialogContent.razor
+# Copilot should follow PascalCase and suffix patterns according to Radix UI
+# No separate code-behind files; use @code blocks
+dotnet_naming_rule.component_class_files.severity = suggestion
+dotnet_naming_rule.component_class_files.symbols = component_files
+dotnet_naming_rule.component_class_files.style = component_pascal_case
+
+dotnet_naming_symbols.component_files.applicable_kinds = class
+dotnet_naming_style.component_pascal_case.capitalization = pascal_case
+
+# ------------------------
+# CSS/SCSS files
+# ------------------------
+[*.css]
+indent_style = space
+indent_size = 2
+max_line_length = 100
+
+[*.scss]
+indent_style = space
+indent_size = 2
+max_line_length = 100
+
+# ------------------------
+# JSON files
+# ------------------------
+[*.json]
+indent_style = space
+indent_size = 2

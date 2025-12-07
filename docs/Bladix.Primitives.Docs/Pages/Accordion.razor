@@ -1,0 +1,464 @@
+@page "/accordion"
+
+<PageTitle>Accordion Showcase - Bladix Primitives</PageTitle>
+
+<div style="max-width: 800px; margin: 0 auto; padding: 2rem;">
+    <h1>Accordion Showcase</h1>
+    <p>Test all Accordion component features and use cases</p>
+
+    <hr style="margin: 2rem 0;" />
+
+    <!-- Example 1: Basic Single Accordion -->
+    <section style="margin-bottom: 3rem;">
+        <h2>1. Basic Single Accordion</h2>
+        <p>Only one item can be open at a time (default behavior)</p>
+        <p><strong>Current Value:</strong> @(_singleValue ?? "none")</p>
+
+        <AccordionRoot Type="AccordionType.Single" @bind-Value="_singleValue" class="accordion">
+            <AccordionItem Value="item-1" class="accordion-item">
+                <AccordionHeader class="accordion-header">
+                    <AccordionTrigger class="accordion-trigger">
+                        <span>Is it accessible?</span>
+                        <svg width="15" height="15" viewBox="0 0 15 15" style="transition: transform 0.3s;">
+                            <path d="M3.13523 6.15803C3.3241 5.95657 3.64052 5.94637 3.84197 6.13523L7.5 9.56464L11.158 6.13523C11.3595 5.94637 11.6759 5.95657 11.8648 6.15803C12.0536 6.35949 12.0434 6.67591 11.842 6.86477L7.84197 10.6148C7.64964 10.7951 7.35036 10.7951 7.15803 10.6148L3.15803 6.86477C2.95657 6.67591 2.94637 6.35949 3.13523 6.15803Z" fill="currentColor"/>
+                        </svg>
+                    </AccordionTrigger>
+                </AccordionHeader>
+                <AccordionContent class="accordion-content">
+                    <div class="accordion-content-inner">
+                        Yes! It adheres to the WAI-ARIA design pattern with full keyboard navigation support.
+                        Try using Arrow keys, Home, and End to navigate between triggers.
+                    </div>
+                </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem Value="item-2" class="accordion-item">
+                <AccordionHeader class="accordion-header">
+                    <AccordionTrigger class="accordion-trigger">
+                        <span>Is it styled?</span>
+                        <svg width="15" height="15" viewBox="0 0 15 15" style="transition: transform 0.3s;">
+                            <path d="M3.13523 6.15803C3.3241 5.95657 3.64052 5.94637 3.84197 6.13523L7.5 9.56464L11.158 6.13523C11.3595 5.94637 11.6759 5.95657 11.8648 6.15803C12.0536 6.35949 12.0434 6.67591 11.842 6.86477L7.84197 10.6148C7.64964 10.7951 7.35036 10.7951 7.15803 10.6148L3.15803 6.86477C2.95657 6.67591 2.94637 6.35949 3.13523 6.15803Z" fill="currentColor"/>
+                        </svg>
+                    </AccordionTrigger>
+                </AccordionHeader>
+                <AccordionContent class="accordion-content">
+                    <div class="accordion-content-inner">
+                        No! It's completely unstyled by default, giving you full control over the design.
+                        This example includes basic styles for demonstration purposes only.
+                    </div>
+                </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem Value="item-3" class="accordion-item">
+                <AccordionHeader class="accordion-header">
+                    <AccordionTrigger class="accordion-trigger">
+                        <span>Can it be animated?</span>
+                        <svg width="15" height="15" viewBox="0 0 15 15" style="transition: transform 0.3s;">
+                            <path d="M3.13523 6.15803C3.3241 5.95657 3.64052 5.94637 3.84197 6.13523L7.5 9.56464L11.158 6.13523C11.3595 5.94637 11.6759 5.95657 11.8648 6.15803C12.0536 6.35949 12.0434 6.67591 11.842 6.86477L7.84197 10.6148C7.64964 10.7951 7.35036 10.7951 7.15803 10.6148L3.15803 6.86477C2.95657 6.67591 2.94637 6.35949 3.13523 6.15803Z" fill="currentColor"/>
+                        </svg>
+                    </AccordionTrigger>
+                </AccordionHeader>
+                <AccordionContent class="accordion-content" ForceMount="true">
+                    <div class="accordion-content-inner">
+                        Yes! You can animate it with CSS keyframes or JavaScript.
+                        This accordion uses CSS transitions for smooth open/close animations.
+                    </div>
+                </AccordionContent>
+            </AccordionItem>
+        </AccordionRoot>
+    </section>
+
+    <!-- Example 2: Collapsible Single Accordion -->
+    <section style="margin-bottom: 3rem;">
+        <h2>2. Collapsible Single Accordion</h2>
+        <p>Click the open item again to close it</p>
+        <p><strong>Current Value:</strong> @(_collapsibleValue ?? "all closed")</p>
+
+        <AccordionRoot Type="AccordionType.Single" Collapsible="true" @bind-Value="_collapsibleValue" class="accordion">
+            <AccordionItem Value="item-1" class="accordion-item">
+                <AccordionHeader class="accordion-header">
+                    <AccordionTrigger class="accordion-trigger">
+                        <span>Click me to toggle</span>
+                        <svg width="15" height="15" viewBox="0 0 15 15" style="transition: transform 0.3s;">
+                            <path d="M3.13523 6.15803C3.3241 5.95657 3.64052 5.94637 3.84197 6.13523L7.5 9.56464L11.158 6.13523C11.3595 5.94637 11.6759 5.95657 11.8648 6.15803C12.0536 6.35949 12.0434 6.67591 11.842 6.86477L7.84197 10.6148C7.64964 10.7951 7.35036 10.7951 7.15803 10.6148L3.15803 6.86477C2.95657 6.67591 2.94637 6.35949 3.13523 6.15803Z" fill="currentColor"/>
+                        </svg>
+                    </AccordionTrigger>
+                </AccordionHeader>
+                <AccordionContent class="accordion-content">
+                    <div class="accordion-content-inner">
+                        When I'm open, you can click my trigger again to close me.
+                        This is enabled by setting <code>Collapsible="true"</code>.
+                    </div>
+                </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem Value="item-2" class="accordion-item">
+                <AccordionHeader class="accordion-header">
+                    <AccordionTrigger class="accordion-trigger">
+                        <span>Try this one too</span>
+                        <svg width="15" height="15" viewBox="0 0 15 15" style="transition: transform 0.3s;">
+                            <path d="M3.13523 6.15803C3.3241 5.95657 3.64052 5.94637 3.84197 6.13523L7.5 9.56464L11.158 6.13523C11.3595 5.94637 11.6759 5.95657 11.8648 6.15803C12.0536 6.35949 12.0434 6.67591 11.842 6.86477L7.84197 10.6148C7.64964 10.7951 7.35036 10.7951 7.15803 10.6148L3.15803 6.86477C2.95657 6.67591 2.94637 6.35949 3.13523 6.15803Z" fill="currentColor"/>
+                        </svg>
+                    </AccordionTrigger>
+                </AccordionHeader>
+                <AccordionContent class="accordion-content">
+                    <div class="accordion-content-inner">
+                        All items can be fully collapsed when Collapsible is enabled.
+                    </div>
+                </AccordionContent>
+            </AccordionItem>
+        </AccordionRoot>
+    </section>
+
+    <!-- Example 3: Multiple Accordion -->
+    <section style="margin-bottom: 3rem;">
+        <h2>3. Multiple Accordion</h2>
+        <p>Multiple items can be open at the same time</p>
+        <p><strong>Open Items:</strong> @(_multipleValue ?? "none")</p>
+
+        <AccordionRoot Type="AccordionType.Multiple" DefaultValue="_defaultMultipleValues" ValueChanged="HandleMultipleValueChanged" class="accordion">
+            <AccordionItem Value="multi-1" class="accordion-item">
+                <AccordionHeader class="accordion-header">
+                    <AccordionTrigger class="accordion-trigger">
+                        <span>Section 1 (Open by default)</span>
+                        <svg width="15" height="15" viewBox="0 0 15 15" style="transition: transform 0.3s;">
+                            <path d="M3.13523 6.15803C3.3241 5.95657 3.64052 5.94637 3.84197 6.13523L7.5 9.56464L11.158 6.13523C11.3595 5.94637 11.6759 5.95657 11.8648 6.15803C12.0536 6.35949 12.0434 6.67591 11.842 6.86477L7.84197 10.6148C7.64964 10.7951 7.35036 10.7951 7.15803 10.6148L3.15803 6.86477C2.95657 6.67591 2.94637 6.35949 3.13523 6.15803Z" fill="currentColor"/>
+                        </svg>
+                    </AccordionTrigger>
+                </AccordionHeader>
+                <AccordionContent class="accordion-content">
+                    <div class="accordion-content-inner">
+                        This section is open by default. You can have multiple sections open simultaneously.
+                    </div>
+                </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem Value="multi-2" class="accordion-item">
+                <AccordionHeader class="accordion-header">
+                    <AccordionTrigger class="accordion-trigger">
+                        <span>Section 2 (Open by default)</span>
+                        <svg width="15" height="15" viewBox="0 0 15 15" style="transition: transform 0.3s;">
+                            <path d="M3.13523 6.15803C3.3241 5.95657 3.64052 5.94637 3.84197 6.13523L7.5 9.56464L11.158 6.13523C11.3595 5.94637 11.6759 5.95657 11.8648 6.15803C12.0536 6.35949 12.0434 6.67591 11.842 6.86477L7.84197 10.6148C7.64964 10.7951 7.35036 10.7951 7.15803 10.6148L3.15803 6.86477C2.95657 6.67591 2.94637 6.35949 3.13523 6.15803Z" fill="currentColor"/>
+                        </svg>
+                    </AccordionTrigger>
+                </AccordionHeader>
+                <AccordionContent class="accordion-content">
+                    <div class="accordion-content-inner">
+                        Both this and Section 1 are open by default using <code>DefaultValue</code>.
+                    </div>
+                </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem Value="multi-3" class="accordion-item">
+                <AccordionHeader class="accordion-header">
+                    <AccordionTrigger class="accordion-trigger">
+                        <span>Section 3</span>
+                        <svg width="15" height="15" viewBox="0 0 15 15" style="transition: transform 0.3s;">
+                            <path d="M3.13523 6.15803C3.3241 5.95657 3.64052 5.94637 3.84197 6.13523L7.5 9.56464L11.158 6.13523C11.3595 5.94637 11.6759 5.95657 11.8648 6.15803C12.0536 6.35949 12.0434 6.67591 11.842 6.86477L7.84197 10.6148C7.64964 10.7951 7.35036 10.7951 7.15803 10.6148L3.15803 6.86477C2.95657 6.67591 2.94637 6.35949 3.13523 6.15803Z" fill="currentColor"/>
+                        </svg>
+                    </AccordionTrigger>
+                </AccordionHeader>
+                <AccordionContent class="accordion-content">
+                    <div class="accordion-content-inner">
+                        Open or close any combination of sections. They're all independent!
+                    </div>
+                </AccordionContent>
+            </AccordionItem>
+        </AccordionRoot>
+    </section>
+
+    <!-- Example 4: Disabled States -->
+    <section style="margin-bottom: 3rem;">
+        <h2>4. Disabled States</h2>
+        <p>Individual items or the entire accordion can be disabled</p>
+
+        <div style="margin-bottom: 1rem;">
+            <label>
+                <input type="checkbox" @bind="_disableEntireAccordion" />
+                Disable entire accordion
+            </label>
+        </div>
+
+        <AccordionRoot Type="AccordionType.Single" Disabled="_disableEntireAccordion" class="accordion">
+            <AccordionItem Value="disabled-1" class="accordion-item">
+                <AccordionHeader class="accordion-header">
+                    <AccordionTrigger class="accordion-trigger">
+                        <span>Enabled Item</span>
+                        <svg width="15" height="15" viewBox="0 0 15 15" style="transition: transform 0.3s;">
+                            <path d="M3.13523 6.15803C3.3241 5.95657 3.64052 5.94637 3.84197 6.13523L7.5 9.56464L11.158 6.13523C11.3595 5.94637 11.6759 5.95657 11.8648 6.15803C12.0536 6.35949 12.0434 6.67591 11.842 6.86477L7.84197 10.6148C7.64964 10.7951 7.35036 10.7951 7.15803 10.6148L3.15803 6.86477C2.95657 6.67591 2.94637 6.35949 3.13523 6.15803Z" fill="currentColor"/>
+                        </svg>
+                    </AccordionTrigger>
+                </AccordionHeader>
+                <AccordionContent class="accordion-content">
+                    <div class="accordion-content-inner">
+                        This item is normally enabled (unless you check the box above).
+                    </div>
+                </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem Value="disabled-2" Disabled="true" class="accordion-item">
+                <AccordionHeader class="accordion-header">
+                    <AccordionTrigger class="accordion-trigger">
+                        <span>Disabled Item (Always)</span>
+                        <svg width="15" height="15" viewBox="0 0 15 15" style="transition: transform 0.3s;">
+                            <path d="M3.13523 6.15803C3.3241 5.95657 3.64052 5.94637 3.84197 6.13523L7.5 9.56464L11.158 6.13523C11.3595 5.94637 11.6759 5.95657 11.8648 6.15803C12.0536 6.35949 12.0434 6.67591 11.842 6.86477L7.84197 10.6148C7.64964 10.7951 7.35036 10.7951 7.15803 10.6148L3.15803 6.86477C2.95657 6.67591 2.94637 6.35949 3.13523 6.15803Z" fill="currentColor"/>
+                        </svg>
+                    </AccordionTrigger>
+                </AccordionHeader>
+                <AccordionContent class="accordion-content">
+                    <div class="accordion-content-inner">
+                        You should not be able to see this content because this item is disabled.
+                    </div>
+                </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem Value="disabled-3" class="accordion-item">
+                <AccordionHeader class="accordion-header">
+                    <AccordionTrigger class="accordion-trigger">
+                        <span>Another Enabled Item</span>
+                        <svg width="15" height="15" viewBox="0 0 15 15" style="transition: transform 0.3s;">
+                            <path d="M3.13523 6.15803C3.3241 5.95657 3.64052 5.94637 3.84197 6.13523L7.5 9.56464L11.158 6.13523C11.3595 5.94637 11.6759 5.95657 11.8648 6.15803C12.0536 6.35949 12.0434 6.67591 11.842 6.86477L7.84197 10.6148C7.64964 10.7951 7.35036 10.7951 7.15803 10.6148L3.15803 6.86477C2.95657 6.67591 2.94637 6.35949 3.13523 6.15803Z" fill="currentColor"/>
+                        </svg>
+                    </AccordionTrigger>
+                </AccordionHeader>
+                <AccordionContent class="accordion-content">
+                    <div class="accordion-content-inner">
+                        Keyboard navigation skips over disabled items automatically.
+                    </div>
+                </AccordionContent>
+            </AccordionItem>
+        </AccordionRoot>
+    </section>
+
+    <!-- Example 5: Horizontal Orientation -->
+    <section style="margin-bottom: 3rem;">
+        <h2>5. Horizontal Orientation</h2>
+        <p>Keyboard navigation uses left/right arrows instead of up/down</p>
+
+        <AccordionRoot Orientation="Orientation.Horizontal" Type="AccordionType.Single" class="accordion horizontal-accordion">
+            <AccordionItem Value="horiz-1" class="accordion-item">
+                <AccordionHeader class="accordion-header">
+                    <AccordionTrigger class="accordion-trigger">
+                        <span>Tab 1</span>
+                    </AccordionTrigger>
+                </AccordionHeader>
+                <AccordionContent class="accordion-content">
+                    <div class="accordion-content-inner">
+                        Content for Tab 1. Use Arrow Left/Right to navigate between tabs.
+                    </div>
+                </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem Value="horiz-2" class="accordion-item">
+                <AccordionHeader class="accordion-header">
+                    <AccordionTrigger class="accordion-trigger">
+                        <span>Tab 2</span>
+                    </AccordionTrigger>
+                </AccordionHeader>
+                <AccordionContent class="accordion-content">
+                    <div class="accordion-content-inner">
+                        Content for Tab 2. Horizontal orientation is great for tab-like interfaces.
+                    </div>
+                </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem Value="horiz-3" class="accordion-item">
+                <AccordionHeader class="accordion-header">
+                    <AccordionTrigger class="accordion-trigger">
+                        <span>Tab 3</span>
+                    </AccordionTrigger>
+                </AccordionHeader>
+                <AccordionContent class="accordion-content">
+                    <div class="accordion-content-inner">
+                        Content for Tab 3. Home and End keys still work to jump to first/last.
+                    </div>
+                </AccordionContent>
+            </AccordionItem>
+        </AccordionRoot>
+    </section>
+
+    <!-- Example 6: RTL Support -->
+    <section style="margin-bottom: 3rem;">
+        <h2>6. RTL (Right-to-Left) Support</h2>
+        <p>Properly handles RTL languages with reversed keyboard navigation</p>
+
+        <AccordionRoot Dir="Direction.Rtl" Orientation="Orientation.Horizontal" Type="AccordionType.Single" class="accordion horizontal-accordion" style="direction: rtl;">
+            <AccordionItem Value="rtl-1" class="accordion-item">
+                <AccordionHeader class="accordion-header">
+                    <AccordionTrigger class="accordion-trigger">
+                        <span>علامة التبويب 1</span>
+                    </AccordionTrigger>
+                </AccordionHeader>
+                <AccordionContent class="accordion-content">
+                    <div class="accordion-content-inner">
+                        محتوى علامة التبويب 1. In RTL mode, arrow key directions are reversed.
+                    </div>
+                </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem Value="rtl-2" class="accordion-item">
+                <AccordionHeader class="accordion-header">
+                    <AccordionTrigger class="accordion-trigger">
+                        <span>علامة التبويب 2</span>
+                    </AccordionTrigger>
+                </AccordionHeader>
+                <AccordionContent class="accordion-content">
+                    <div class="accordion-content-inner">
+                        محتوى علامة التبويب 2. Arrow Right moves to previous, Arrow Left moves to next.
+                    </div>
+                </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem Value="rtl-3" class="accordion-item">
+                <AccordionHeader class="accordion-header">
+                    <AccordionTrigger class="accordion-trigger">
+                        <span>علامة التبويب 3</span>
+                    </AccordionTrigger>
+                </AccordionHeader>
+                <AccordionContent class="accordion-content">
+                    <div class="accordion-content-inner">
+                        محتوى علامة التبويب 3. Full RTL support for Arabic, Hebrew, and other RTL languages.
+                    </div>
+                </AccordionContent>
+            </AccordionItem>
+        </AccordionRoot>
+    </section>
+</div>
+
+<style>
+    /* Basic Accordion Styles */
+    .accordion {
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        overflow: hidden;
+    }
+
+    .accordion-item {
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .accordion-item:last-child {
+        border-bottom: none;
+    }
+
+    .accordion-header {
+        margin: 0;
+    }
+
+    .accordion-trigger {
+        all: unset;
+        font-family: inherit;
+        padding: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 15px;
+        line-height: 1;
+        cursor: pointer;
+        width: 100%;
+        background-color: white;
+        transition: background-color 0.2s;
+    }
+
+    .accordion-trigger:hover {
+        background-color: #f9fafb;
+    }
+
+    .accordion-trigger:focus-visible {
+        outline: 2px solid #3b82f6;
+        outline-offset: -2px;
+    }
+
+    .accordion-trigger[data-state="open"] svg {
+        transform: rotate(180deg);
+    }
+
+    .accordion-trigger[data-disabled="true"] {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .accordion-trigger[data-disabled="true"]:hover {
+        background-color: white;
+    }
+
+    .accordion-content {
+        overflow: hidden;
+        font-size: 14px;
+        transition: all 0.3s ease-in-out;
+    }
+
+    .accordion-content[data-state="closed"] {
+        max-height: 0;
+        opacity: 0;
+    }
+
+    .accordion-content[data-state="open"] {
+        max-height: 500px;
+        opacity: 1;
+    }
+
+    .accordion-content-inner {
+        padding: 1rem;
+        background-color: #f9fafb;
+    }
+
+    /* Horizontal Accordion Specific Styles */
+    .horizontal-accordion {
+        display: flex;
+        flex-direction: row;
+    }
+
+    .horizontal-accordion .accordion-item {
+        flex: 1;
+        border-bottom: none;
+        border-right: 1px solid #e5e7eb;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .horizontal-accordion .accordion-item:last-child {
+        border-right: none;
+    }
+
+    .horizontal-accordion .accordion-trigger {
+        writing-mode: horizontal-tb;
+        justify-content: center;
+    }
+
+    .horizontal-accordion .accordion-content[data-state="open"] {
+        max-width: 300px;
+    }
+
+    code {
+        background-color: #e5e7eb;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-size: 0.9em;
+    }
+
+    hr {
+        border: none;
+        border-top: 1px solid #e5e7eb;
+    }
+</style>
+
+@code {
+    // Example 1: Basic Single
+    private string? _singleValue;
+
+    // Example 2: Collapsible
+    private string? _collapsibleValue;
+
+    // Example 3: Multiple
+    private string[] _defaultMultipleValues = new[] { "multi-1", "multi-2" };
+    private string? _multipleValue = "multi-1,multi-2";
+
+    // Example 4: Disabled
+    private bool _disableEntireAccordion = false;
+
+    private void HandleMultipleValueChanged(string? value)
+    {
+        _multipleValue = value;
+    }
+}

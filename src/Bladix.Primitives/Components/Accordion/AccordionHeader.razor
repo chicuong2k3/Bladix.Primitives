@@ -1,0 +1,23 @@
+@inherits BladixComponentBase
+
+@if (AsChild)
+{
+    @ChildContent
+}
+else
+{
+    <h3 @attributes="AdditionalAttributes"
+        id="@($"accordion-header-{Item?.Value}")"
+        data-state="@(Item?.IsOpen == true ? "open" : "closed")"
+        data-disabled="@((Item?.Disabled == true || Root?.Disabled == true) ? "true" : null)"
+        data-orientation="@Root?.Orientation.ToString().ToLowerInvariant()"
+        class="@Class"
+        @ref="ElementRef">
+        @ChildContent
+    </h3>
+}
+
+@code {
+    [CascadingParameter] public AccordionRoot? Root { get; set; }
+    [CascadingParameter] public AccordionItem? Item { get; set; }
+}

@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Razor">
 
 	<PropertyGroup>
-		<TargetFramework>net9.0</TargetFramework>
+		<TargetFramework>net10.0</TargetFramework>
 		<Nullable>enable</Nullable>
 		<IsPackable>false</IsPackable>
 	</PropertyGroup>
@@ -16,10 +16,11 @@
 	<ItemGroup>
 		<PackageReference Include="bunit" Version="2.1.1" />
 		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
-		<PackageReference Include="coverlet.collector" Version="6.0.3">
+		<PackageReference Include="coverlet.collector" Version="6.0.4">
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 			<PrivateAssets>all</PrivateAssets>
 		</PackageReference>
+		<PackageReference Include="Moq" Version="4.20.72" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -31,10 +32,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\..\src\Bladix.Primitives.Core\Bladix.Primitives.Core.csproj" />
+	  <ProjectReference Include="..\..\src\Bladix.Primitives\Bladix.Primitives.csproj" />
 	</ItemGroup>
-
-
-
-
 </Project>
