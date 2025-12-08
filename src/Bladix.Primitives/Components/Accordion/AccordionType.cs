@@ -1,4 +1,4 @@
-namespace Bladix.Primitives;
+namespace Bladix.Primitives.Components.Accordion;
 
 /// <summary>
 /// Determines whether one or multiple items can be opened at the same time.

@@ -1,0 +1,40 @@
+
+@inherits BladixComponentBase
+
+@if (AsChild)
+{
+    @ChildContent
+}
+else
+{
+    @if (_isActive || ForceMount)
+    {
+        <div @attributes="AdditionalAttributes"
+             id="@($"tabs-content-{Value}")"
+             role="tabpanel"
+             aria-labelledby="@($"tabs-trigger-{Value}")"
+             data-state="@(_isActive ? "active" : "inactive")"
+             data-orientation="@Root?.Orientation.ToString().ToLowerInvariant()"
+             data-bladix-tabs-content="true"
+             tabindex="@(_isActive ? 0 : (int?)null)"
+             hidden="@(!_isActive && ForceMount)"
+             class="@Class"
+             style="@Style"
+             @ref="ElementRef">
+            @ChildContent
+        </div>
+    }
+}
+
+@code {
+    private bool _isActive;
+
+    [CascadingParameter] public TabsRoot? Root { get; set; }
+    [Parameter] public string? Value { get; set; }
+    [Parameter] public bool ForceMount { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        _isActive = Root?.IsTabActive(Value) == true;
+    }
+}

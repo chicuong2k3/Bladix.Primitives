@@ -1,3 +1,4 @@
+
 @inherits BladixComponentBase
 
 @*
@@ -20,12 +21,14 @@ else
        - data-state: "open" | "closed" for CSS targeting
        - data-disabled: present when disabled
        - data-orientation: inherited from Root
+       - data-radix-collection-item: Radix UI tracking attribute
     *@
     <div @attributes="AdditionalAttributes"
          data-state="@(_isOpen ? "open" : "closed")"
          data-disabled="@(Disabled ? "true" : null)"
          data-orientation="@Root?.Orientation.ToString().ToLowerInvariant()"
-         class="@Class"
+         data-bladix-collection-item="true"
+         class="@Class" style="@Style"
          @ref="ElementRef">
         <CascadingValue Value="this" IsFixed="true">
             @ChildContent

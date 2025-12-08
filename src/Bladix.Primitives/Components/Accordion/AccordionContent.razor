@@ -24,7 +24,7 @@
              data-disabled="@((Item?.Disabled == true || Root?.Disabled == true) ? "true" : null)"
              data-orientation="@Root?.Orientation.ToString().ToLowerInvariant()"
              hidden="@(Item?.IsOpen != true && !ForceMount)"
-             class="@Class"
+             class="@Class" style="@Style"
              @ref="ElementRef">
             @ChildContent
         </div>

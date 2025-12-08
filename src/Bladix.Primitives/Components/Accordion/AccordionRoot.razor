@@ -1,3 +1,4 @@
+
 @inherits BladixComponentBase
 
 @if (AsChild)
@@ -10,7 +11,8 @@ else
 {
     <div @attributes="AdditionalAttributes"
          data-orientation="@Orientation.ToString().ToLowerInvariant()"
-         class="@Class"
+         data-bladix-accordion="true"
+         class="@Class" style="@Style"
          @ref="ElementRef">
         <CascadingValue Value="this" IsFixed="true">
             @ChildContent

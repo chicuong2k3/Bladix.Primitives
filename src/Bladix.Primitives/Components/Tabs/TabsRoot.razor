@@ -1,0 +1,129 @@
+
+@inherits BladixComponentBase
+
+@if (AsChild)
+{
+    <CascadingValue Value="this" IsFixed="true">
+        @ChildContent
+    </CascadingValue>
+}
+else
+{
+    <div @attributes="AdditionalAttributes"
+         data-orientation="@Orientation.ToString().ToLowerInvariant()"
+         data-bladix-tabs="true"
+         dir="@Dir.ToString().ToLowerInvariant()"
+         class="@Class" style="@Style"
+         @ref="ElementRef">
+        <CascadingValue Value="this" IsFixed="true">
+            @ChildContent
+        </CascadingValue>
+    </div>
+}
+
+@code {
+    private string? _activeValue;
+    private readonly List<TabsTrigger> _triggers = new();
+
+    [Parameter] public string? Value { get; set; }
+    [Parameter] public EventCallback<string?> ValueChanged { get; set; }
+    [Parameter] public string? DefaultValue { get; set; }
+    [Parameter] public Orientation Orientation { get; set; } = Orientation.Horizontal;
+    [Parameter] public Direction Dir { get; set; } = Direction.Ltr;
+    [Parameter] public ActivationMode ActivationMode { get; set; } = ActivationMode.Automatic;
+    [Parameter] public bool Loop { get; set; } = true;
+
+    protected override void OnInitialized()
+    {
+        _activeValue = Value ?? DefaultValue;
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (Value != null && Value != _activeValue)
+        {
+            _activeValue = Value;
+        }
+    }
+
+    public bool IsTabActive(string? tabValue) => tabValue == _activeValue;
+
+    public async Task SetActiveTab(string? tabValue)
+    {
+        if (_activeValue != tabValue)
+        {
+            _activeValue = tabValue;
+            await ValueChanged.InvokeAsync(tabValue);
+            StateHasChanged();
+        }
+    }
+
+    public void RegisterTrigger(TabsTrigger trigger)
+    {
+        if (!_triggers.Contains(trigger))
+        {
+            _triggers.Add(trigger);
+        }
+    }
+
+    public void UnregisterTrigger(TabsTrigger trigger)
+    {
+        _triggers.Remove(trigger);
+    }
+
+    public TabsTrigger? GetNextTrigger(TabsTrigger current)
+    {
+        int currentIndex = _triggers.IndexOf(current);
+        if (currentIndex == -1) return null;
+
+        for (int i = currentIndex + 1; i < _triggers.Count; i++)
+        {
+            if (!_triggers[i].IsDisabled)
+                return _triggers[i];
+        }
+
+        if (Loop)
+        {
+            for (int i = 0; i < currentIndex; i++)
+            {
+                if (!_triggers[i].IsDisabled)
+                    return _triggers[i];
+            }
+        }
+
+        return null;
+    }
+
+    public TabsTrigger? GetPreviousTrigger(TabsTrigger current)
+    {
+        int currentIndex = _triggers.IndexOf(current);
+        if (currentIndex == -1) return null;
+
+        for (int i = currentIndex - 1; i >= 0; i--)
+        {
+            if (!_triggers[i].IsDisabled)
+                return _triggers[i];
+        }
+
+        if (Loop)
+        {
+            for (int i = _triggers.Count - 1; i > currentIndex; i--)
+            {
+                if (!_triggers[i].IsDisabled)
+                    return _triggers[i];
+            }
+        }
+
+        return null;
+    }
+
+    public TabsTrigger? GetFirstTrigger()
+    {
+        return _triggers.FirstOrDefault(t => !t.IsDisabled);
+    }
+
+    public TabsTrigger? GetLastTrigger()
+    {
+        return _triggers.LastOrDefault(t => !t.IsDisabled);
+    }
+}

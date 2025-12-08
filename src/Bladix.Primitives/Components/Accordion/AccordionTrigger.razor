@@ -1,3 +1,4 @@
+
 @inject IJSRuntime JSRuntime
 @inherits BladixComponentBase
 @implements IAsyncDisposable
@@ -19,7 +20,7 @@ else
             data-disabled="@(_isDisabled ? "true" : null)"
             data-orientation="@Root?.Orientation.ToString().ToLowerInvariant()"
             disabled="@_isDisabled"
-            class="@Class"
+            class="@Class" style="@Style"
             @ref="ElementRef">
         @ChildContent
     </button>

@@ -1,0 +1,23 @@
+
+@inherits BladixComponentBase
+
+@if (AsChild)
+{
+    @ChildContent
+}
+else
+{
+    <div @attributes="AdditionalAttributes"
+         role="tablist"
+         aria-orientation="@Root?.Orientation.ToString().ToLowerInvariant()"
+         data-orientation="@Root?.Orientation.ToString().ToLowerInvariant()"
+         data-bladix-tabs-list="true"
+         class="@Class" style="@Style"
+         @ref="ElementRef">
+        @ChildContent
+    </div>
+}
+
+@code {
+    [CascadingParameter] public TabsRoot? Root { get; set; }
+}

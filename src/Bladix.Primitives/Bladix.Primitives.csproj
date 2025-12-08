@@ -26,6 +26,9 @@
     <None Update="Components\Accordion\AccordionTrigger.razor.js">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="Components\Tabs\TabsTrigger.razor.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

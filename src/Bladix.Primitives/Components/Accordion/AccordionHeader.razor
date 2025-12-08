@@ -11,7 +11,7 @@ else
         data-state="@(Item?.IsOpen == true ? "open" : "closed")"
         data-disabled="@((Item?.Disabled == true || Root?.Disabled == true) ? "true" : null)"
         data-orientation="@Root?.Orientation.ToString().ToLowerInvariant()"
-        class="@Class"
+        class="@Class" style="@Style"
         @ref="ElementRef">
         @ChildContent
     </h3>
