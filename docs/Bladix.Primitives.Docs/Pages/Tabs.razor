@@ -8,7 +8,6 @@
 
     <hr style="margin: 2rem 0;" />
 
-    <!-- Example 1: Basic Tabs -->
     <section style="margin-bottom: 3rem;">
         <h2>1. Basic Tabs (Horizontal)</h2>
         <p>Click tabs to switch between content panels</p>
@@ -78,7 +77,6 @@
         </TabsRoot>
     </section>
 
-    <!-- Example 2: Default Value -->
     <section style="margin-bottom: 3rem;">
         <h2>2. Tabs with Default Value</h2>
         <p>The second tab is selected by default using <code>DefaultValue</code></p>
@@ -119,7 +117,6 @@
         </TabsRoot>
     </section>
 
-    <!-- Example 3: Disabled Tabs -->
     <section style="margin-bottom: 3rem;">
         <h2>3. Disabled Tabs</h2>
         <p>Individual tabs can be disabled</p>
@@ -160,12 +157,11 @@
         </TabsRoot>
     </section>
 
-    <!-- Example 4: Vertical Orientation -->
     <section style="margin-bottom: 3rem;">
         <h2>4. Vertical Tabs</h2>
         <p>Tabs can be displayed vertically. Use Arrow Up/Down for keyboard navigation.</p>
 
-        <TabsRoot DefaultValue="general" class="tabs-root vertical-tabs">
+        <TabsRoot DefaultValue="general" Orientation="Orientation.Vertical" class="tabs-root vertical-tabs">
             <TabsList class="tabs-list vertical-tabs-list">
                 <TabsTrigger Value="general" class="tabs-trigger">
                     General
@@ -219,7 +215,7 @@
         <p>Arrow keys focus tabs without activating them. Press Enter or Space to activate.</p>
         <p><strong>Current Tab:</strong> @(_manualValue ?? "none")</p>
 
-        <TabsRoot @bind-Value="_manualValue" DefaultValue="manual1" class="tabs-root">
+        <TabsRoot @bind-Value="_manualValue" DefaultValue="manual1" ActivationMode="ActivationMode.Manual" class="tabs-root">
             <TabsList class="tabs-list">
                 <TabsTrigger Value="manual1" class="tabs-trigger">
                     Tab 1
@@ -261,7 +257,7 @@
         <h2>6. RTL (Right-to-Left) Support</h2>
         <p>Properly handles RTL languages with reversed keyboard navigation</p>
 
-        <TabsRoot DefaultValue="rtl1" class="tabs-root" style="direction: rtl;">
+        <TabsRoot DefaultValue="rtl1" Dir="Direction.Rtl" class="tabs-root" style="direction: rtl;">
             <TabsList class="tabs-list">
                 <TabsTrigger Value="rtl1" class="tabs-trigger">
                     علامة التبويب 1
