@@ -1,23 +1,21 @@
-
 @inherits BladixComponentBase
+@implements IDisposable
 
-@if (AsChild)
+@if (ForceMount || !Hidden)
 {
-    @ChildContent
-}
-else
-{
-    @if (_isActive || ForceMount)
+    @if (AsChild)
+    {
+        @ChildContent
+    }
+    else
     {
         <div @attributes="AdditionalAttributes"
-             id="@($"tabs-content-{Value}")"
+             id="@_contentId"
              role="tabpanel"
-             aria-labelledby="@($"tabs-trigger-{Value}")"
-             data-state="@(_isActive ? "active" : "inactive")"
-             data-orientation="@Root?.Orientation.ToString().ToLowerInvariant()"
-             data-bladix-tabs-content="true"
-             tabindex="@(_isActive ? 0 : (int?)null)"
-             hidden="@(!_isActive && ForceMount)"
+             aria-labelledby="@_ariaLabelledBy"
+             data-state="@(Selected ? "active" : "inactive")"
+             data-disabled="@((Disabled) ? "true" : null)"
+             hidden="@(!Selected)"
              class="@Class"
              style="@Style"
              @ref="ElementRef">
@@ -27,14 +25,71 @@ else
 }
 
 @code {
-    private bool _isActive;
+    // When consumers use a trigger that sets `aria-controls="tabs-content-{Value}"`,
+    // TabsContent will use the same pattern if `Value` is supplied.
+    private string _fallbackContentId = $"bladix-tabs-content-{Guid.NewGuid():N}";
+    private string? _contentId;
+    private string? _ariaLabelledBy;
 
-    [CascadingParameter] public TabsRoot? Root { get; set; }
+    /// <summary>
+    /// Optional value used to compose the stable id: "tabs-content-{Value}".
+    /// If provided, the element id will be exactly that string so triggers that set
+    /// aria-controls="@($"tabs-content-{Value}")" match reliably.
+    /// </summary>
     [Parameter] public string? Value { get; set; }
+
+    /// <summary>
+    /// When set, will be used as the value for aria-labelledby.
+    /// If not provided and Value is present, a reasonable default of "tabs-trigger-{Value}"
+    /// will be used so aria-labelledby and aria-controls are linked.
+    /// </summary>
+    [Parameter] public string? AriaLabelledBy { get; set; }
+
+    /// <summary>
+    /// Indicates whether this tab panel is selected/visible.
+    /// Consumers (or a Tabs container) should bind this appropriately.
+    /// </summary>
+    [Parameter] public bool Selected { get; set; }
+
+    /// <summary>
+    /// Allows forcing the content to remain mounted even when not selected.
+    /// </summary>
     [Parameter] public bool ForceMount { get; set; }
+
+    /// <summary>
+    /// Exposes whether the content should be hidden in the DOM (used internally).
+    /// </summary>
+    private bool Hidden => !Selected;
+
+    /// <summary>
+    /// Optional disabled flag for this panel.
+    /// </summary>
+    [Parameter] public bool Disabled { get; set; }
+
+    /// <summary>
+    /// Unique id assigned to the content element. Matches "tabs-content-{Value}" when Value is provided.
+    /// </summary>
+    public string ContentId => _contentId ?? _fallbackContentId;
 
     protected override void OnParametersSet()
     {
-        _isActive = Root?.IsTabActive(Value) == true;
+        // Compose ID to match triggers that rely on "tabs-content-{Value}"
+        if (!string.IsNullOrEmpty(Value))
+        {
+            // keep value safe for id usage (consumer should provide valid id-able strings)
+            _contentId = $"tabs-content-{Value}";
+            // default aria-labelledby to the parallel trigger id pattern when not provided
+            _ariaLabelledBy = AriaLabelledBy ?? $"tabs-trigger-{Value}";
+        }
+        else
+        {
+            _contentId = _fallbackContentId;
+            _ariaLabelledBy = AriaLabelledBy; // may be null; consumers should set if needed
+        }
+    }
+
+    public void Dispose()
+    {
+        // Placeholder for future cleanup or registration with a TabsItem if implemented.
     }
 }

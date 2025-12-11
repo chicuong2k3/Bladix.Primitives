@@ -20,7 +20,7 @@
         <div @attributes="AdditionalAttributes"
              id="@_contentId"
              role="region"
-             aria-labelledby="@(Item?.TriggerId ?? Item?.HeaderId)"
+             aria-labelledby="@(Item?.HasTrigger == true ? Item?.TriggerId : Item?.HeaderId)"
              data-state="@(Item?.IsOpen == true ? "open" : "closed")"
              data-disabled="@((Item?.Disabled == true || Root?.Disabled == true) ? "true" : null)"
              data-orientation="@Root?.Orientation.ToString().ToLowerInvariant()"

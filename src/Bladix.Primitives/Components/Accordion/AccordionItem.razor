@@ -60,6 +60,10 @@ else
     /// </summary>
     public string TriggerId => _trigger?.TriggerId ?? (_fallbackTriggerId + (string.IsNullOrEmpty(Value) ? string.Empty : $"-{Value}"));
 
+    public bool HasHeader => _header != null;
+    public bool HasContent => _content != null;
+    public bool HasTrigger => _trigger != null;
+
     protected override void OnParametersSet()
     {
         if (Root != null)

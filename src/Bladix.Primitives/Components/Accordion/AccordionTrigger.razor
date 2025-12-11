@@ -14,7 +14,7 @@ else
             @onclick="HandleClick"
             @onkeydown="HandleKeyDown"
             aria-expanded="@(Item?.IsOpen == true ? "true" : "false")"
-            aria-controls="@(Item?.ContentId)"
+            aria-controls="@(Item?.HasContent == true ? Item?.ContentId : null)"
             data-state="@(Item?.IsOpen == true ? "open" : "closed")"
             data-disabled="@(_isDisabled ? "true" : null)"
             data-orientation="@Root?.Orientation.ToString().ToLowerInvariant()"
