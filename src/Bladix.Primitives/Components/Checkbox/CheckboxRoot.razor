@@ -1,0 +1,197 @@
+@inject IJSRuntime JSRuntime
+@inherits BladixComponentBase
+@implements IAsyncDisposable
+
+@if (AsChild)
+{
+    <CascadingValue Value="this" IsFixed="true">
+        @ChildContent
+    </CascadingValue>
+}
+else
+{
+    <div @attributes="AdditionalAttributes"
+         role="checkbox"
+         tabindex="@(_disabled ? null : "0")"
+         aria-checked="@_ariaChecked"
+         aria-disabled="@(_disabled ? "true" : null)"
+         data-state="@DataState"
+         data-disabled="@(_disabled ? "true" : null)"
+         class="@Class" style="@Style"
+         @onclick="HandleClick"
+         @onkeydown="HandleKeyDown"
+         @ref="ElementRef">
+        <!-- Visually-hidden native input so forms and screen readers behave normally -->
+        <input type="checkbox"
+               id="@Id"
+               tabindex="-1"
+               style="position:absolute; width:1px; height:1px; opacity:0; pointer-events:none; margin:0; padding:0; border:0;"
+               @bind="_checked"
+               @bind:event="onchange"
+               disabled="@_disabled"
+               name="@Name"
+               value="@Value"
+               required="@Required"
+               @ref="_inputRef" />
+
+        <CascadingValue Value="this" IsFixed="true">
+            @ChildContent
+        </CascadingValue>
+    </div>
+}
+
+@code {
+    private BladixDom? _bladixDom;
+    private ElementReference _inputRef;
+
+    private bool _disabled;
+    private bool _checked;
+    private bool _indeterminate;
+
+    // Unique id reserved for label association
+    private readonly string _id = $"bladix-checkbox-{Guid.NewGuid():N}";
+
+    // Public read-only properties used by children (Indicator/Label)
+    public bool IsChecked => _checked;
+    public bool IsIndeterminate => _indeterminate;
+    public string DataState => _indeterminate ? "indeterminate" : (_checked ? "checked" : "unchecked");
+    public string Id => _id;
+
+    private string _ariaChecked => _indeterminate ? "mixed" : (_checked ? "true" : "false");
+
+    [Parameter] public bool? Checked { get; set; }               // controlled (null = uncontrolled)
+    [Parameter] public EventCallback<bool?> CheckedChanged { get; set; }
+    [Parameter] public bool DefaultChecked { get; set; }
+
+    [Parameter] public bool Indeterminate { get; set; }          // allow parent to set indeterminate
+    [Parameter] public EventCallback<bool> IndeterminateChanged { get; set; }
+
+    [Parameter] public bool Disabled { get; set; }
+    [Parameter] public bool Required { get; set; }
+    [Parameter] public string? Name { get; set; }
+    [Parameter] public string? Value { get; set; }
+
+    protected override void OnInitialized()
+    {
+        _bladixDom = new BladixDom(JSRuntime);
+        _checked = Checked ?? DefaultChecked;
+        _indeterminate = Indeterminate;
+    }
+
+    protected override void OnParametersSet()
+    {
+        // sync controlled values
+        if (Checked.HasValue)
+        {
+            if (_checked != Checked.Value)
+                _checked = Checked.Value;
+        }
+
+        // sync indeterminate if parent provided parameter
+        if (Indeterminate != _indeterminate)
+        {
+            _indeterminate = Indeterminate;
+        }
+
+        _disabled = Disabled;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_bladixDom != null)
+        {
+            try
+            {
+                // ensure native input reflects indeterminate state
+                await _bladixDom.SetIndeterminate(_inputRef, _indeterminate);
+            }
+            catch (JSException) { /* ignore in prerender/no-js env */ }
+            catch (InvalidOperationException) { /* ignore when JSRuntime unavailable */ }
+        }
+    }
+
+    private async Task HandleClick()
+    {
+        if (_disabled) return;
+
+        var newChecked = !_checked;
+        await UpdateStateAsync(newChecked, indeterminate: false);
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (_disabled) return;
+
+        // Space toggles checkbox; Enter also toggles for many implementations
+        if (e.Key == " " || e.Key == "Spacebar" || e.Key == "Enter")
+        {
+            await HandleClick();
+        }
+    }
+
+    private async Task HandleNativeChange(ChangeEventArgs _)
+    {
+        if (_disabled) return;
+
+        // @bind updated _checked already
+        await UpdateStateAsync(_checked, indeterminate: false);
+    }
+
+    /// <summary>
+    /// Centralized state update. Honors controlled mode by always invoking callbacks.
+    /// In uncontrolled mode it updates internal state.
+    /// </summary>
+    public async Task UpdateStateAsync(bool newChecked, bool indeterminate = false)
+    {
+        // If uncontrolled (Checked == null) update internal first so UI follows immediately
+        if (!Checked.HasValue)
+        {
+            _checked = newChecked;
+            _indeterminate = indeterminate;
+            StateHasChanged();
+        }
+        else
+        {
+            // if controlled, keep internal copy in sync with expected new value while awaiting parent update
+            _checked = newChecked;
+            _indeterminate = indeterminate;
+        }
+
+        // Invoke change callbacks for parent to react (controlled or uncontrolled)
+        if (CheckedChanged.HasDelegate)
+        {
+            await CheckedChanged.InvokeAsync(newChecked);
+        }
+        else
+        {
+            // still invoke with current value for consistency (null allowed)
+            await CheckedChanged.InvokeAsync(newChecked);
+        }
+
+        if (IndeterminateChanged.HasDelegate)
+        {
+            await IndeterminateChanged.InvokeAsync(indeterminate);
+        }
+
+        // ensure native input reflects indeterminate after state change
+        if (_bladixDom != null)
+        {
+            try
+            {
+                await _bladixDom.SetIndeterminate(_inputRef, indeterminate);
+            }
+            catch { /* ignore */ }
+        }
+
+        StateHasChanged();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_bladixDom != null)
+        {
+            await _bladixDom.DisposeAsync();
+            _bladixDom = null;
+        }
+    }
+}

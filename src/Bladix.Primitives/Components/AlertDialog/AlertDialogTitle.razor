@@ -1,0 +1,19 @@
+@inherits BladixComponentBase
+
+@if (AsChild)
+{
+    @ChildContent
+}
+else
+{
+    <h2 @attributes="AdditionalAttributes"
+        id="@Content?.TitleId"
+        class="@Class" style="@Style"
+        @ref="ElementRef">
+        @ChildContent
+    </h2>
+}
+
+@code {
+    [CascadingParameter] public AlertDialogContent? Content { get; set; }
+}

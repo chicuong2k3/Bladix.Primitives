@@ -6,12 +6,12 @@ namespace Bladix.Primitives.Components.Accordion;
 public enum AccordionType
 {
     /// <summary>
-    /// Only one accordion item can be open at a time
+    /// Only one accordion item can be open at a time.
     /// </summary>
     Single,
     
     /// <summary>
-    /// Multiple accordion items can be open at the same time
+    /// Multiple accordion items can be open at the same time.
     /// </summary>
     Multiple
 }

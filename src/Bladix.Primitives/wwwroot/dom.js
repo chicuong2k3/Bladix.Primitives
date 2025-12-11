@@ -153,3 +153,19 @@ export function getComputedStyle(element) {
     return getOwnerWindow(element).getComputedStyle(element);
 }
 
+/**
+ * Set native checkbox indeterminate property on an input element.
+ * This is necessary because `indeterminate` is not an attribute and must be set on the DOM object.
+ * @param {HTMLInputElement} element 
+ * @param {boolean} value
+ */
+export function setIndeterminate(element, value) {
+    if (!canUseDOM || !element) return;
+    try {
+        element.indeterminate = !!value;
+    } catch (e) {
+        // swallow for environments without full DOM during prerendering
+        console.warn("setIndeterminate failed:", e);
+    }
+}
+

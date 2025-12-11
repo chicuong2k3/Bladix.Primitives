@@ -1,0 +1,143 @@
+
+@inject IJSRuntime JSRuntime
+@inherits BladixComponentBase
+@implements IAsyncDisposable
+
+<CascadingValue Value="this" IsFixed="true">
+    @ChildContent
+</CascadingValue>
+
+@code {
+    private TimerInterop? _timerInterop;
+    private int? _openTimerId;
+    private int? _closeTimerId;
+    private bool _isOpen;
+
+    [CascadingParameter] public TooltipProvider? Provider { get; set; }
+
+    /// <summary>
+    /// The controlled open state of the tooltip.
+    /// </summary>
+    [Parameter] public bool? Open { get; set; }
+
+    /// <summary>
+    /// Event callback when the open state changes.
+    /// </summary>
+    [Parameter] public EventCallback<bool> OpenChanged { get; set; }
+
+    /// <summary>
+    /// The open state of the tooltip when it is initially rendered. Use when you do not need to control its open state.
+    /// </summary>
+    [Parameter] public bool DefaultOpen { get; set; } = false;
+
+    /// <summary>
+    /// The duration from when the mouse enters the trigger until the tooltip opens.
+    /// Overrides the provider's DelayDuration.
+    /// </summary>
+    [Parameter] public int? DelayDuration { get; set; }
+
+    /// <summary>
+    /// When true, clicking on trigger will prevent the tooltip from opening.
+    /// Default: false
+    /// </summary>
+    [Parameter] public bool DisableHoverableContent { get; set; } = false;
+
+    public bool IsOpen => Open ?? _isOpen;
+
+    protected override void OnInitialized()
+    {
+        _timerInterop = new TimerInterop(JSRuntime);
+        if (!Open.HasValue)
+        {
+            _isOpen = DefaultOpen;
+        }
+    }
+
+    internal async Task HandlePointerEnter()
+    {
+        await ClearCloseTimer();
+        
+        var delay = DelayDuration ?? Provider?.DelayDuration ?? 700;
+        var shouldSkip = Provider?.ShouldSkipDelay() ?? false;
+
+        if (shouldSkip)
+        {
+            await OpenTooltip();
+        }
+        else
+        {
+            _openTimerId = await _timerInterop!.SetTimeout(async () => await OpenTooltip(), delay);
+        }
+    }
+
+    internal async Task HandlePointerLeave()
+    {
+        await ClearOpenTimer();
+        _closeTimerId = await _timerInterop!.SetTimeout(async () => await CloseTooltip(), 0);
+    }
+
+    internal async Task HandlePointerDown()
+    {
+        await ClearOpenTimer();
+        await CloseTooltip();
+    }
+
+    internal async Task HandleFocus()
+    {
+        await ClearCloseTimer();
+        await OpenTooltip();
+    }
+
+    internal async Task HandleBlur()
+    {
+        await CloseTooltip();
+    }
+
+    private async Task OpenTooltip()
+    {
+        if (Open.HasValue) return;
+
+        _isOpen = true;
+        await OpenChanged.InvokeAsync(true);
+        StateHasChanged();
+    }
+
+    private async Task CloseTooltip()
+    {
+        if (Open.HasValue) return;
+
+        _isOpen = false;
+        Provider?.NotifyClose();
+        await OpenChanged.InvokeAsync(false);
+        StateHasChanged();
+    }
+
+    private async Task ClearOpenTimer()
+    {
+        if (_openTimerId.HasValue)
+        {
+            await _timerInterop!.ClearTimeout(_openTimerId.Value);
+            _openTimerId = null;
+        }
+    }
+
+    private async Task ClearCloseTimer()
+    {
+        if (_closeTimerId.HasValue)
+        {
+            await _timerInterop!.ClearTimeout(_closeTimerId.Value);
+            _closeTimerId = null;
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await ClearOpenTimer();
+        await ClearCloseTimer();
+
+        if (_timerInterop != null)
+        {
+            await _timerInterop.DisposeAsync();
+        }
+    }
+}

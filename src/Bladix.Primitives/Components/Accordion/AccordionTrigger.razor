@@ -1,4 +1,3 @@
-
 @inject IJSRuntime JSRuntime
 @inherits BladixComponentBase
 @implements IAsyncDisposable
@@ -15,7 +14,7 @@ else
             @onclick="HandleClick"
             @onkeydown="HandleKeyDown"
             aria-expanded="@(Item?.IsOpen == true ? "true" : "false")"
-            aria-controls="@($"accordion-content-{Item?.Value}")"
+            aria-controls="@(Item?.ContentId)"
             data-state="@(Item?.IsOpen == true ? "open" : "closed")"
             data-disabled="@(_isDisabled ? "true" : null)"
             data-orientation="@Root?.Orientation.ToString().ToLowerInvariant()"
@@ -28,11 +27,14 @@ else
 
 @code {
     private bool _isDisabled;
-    private string _triggerId = $"accordion-trigger-{Guid.NewGuid():N}";
+    private string _triggerId = $"bladix-accordion-trigger-{Guid.NewGuid():N}";
     private BladixDom? _bladixDom;
     private AccordionKeyboard? _accordionKeyboard;
 
     public bool IsDisabled => _isDisabled;
+
+    // Expose trigger id so parent item/content can reference it for aria-labelledby
+    public string TriggerId => _triggerId;
 
     [CascadingParameter] public AccordionRoot? Root { get; set; }
     [CascadingParameter] public AccordionItem? Item { get; set; }
@@ -41,28 +43,29 @@ else
     {
         _bladixDom = new BladixDom(JSRuntime);
         _accordionKeyboard = new AccordionKeyboard(JSRuntime);
-        Root?.RegisterTrigger(this);
+        // registration moved to OnAfterRenderAsync to preserve DOM order
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender && !_isDisabled && Root != null)
+        if (firstRender)
         {
-            try
+            // register with item and root after render to preserve DOM order for keyboard navigation
+            Item?.RegisterTrigger(this);
+            Root?.RegisterTrigger(this);
+
+            if (!_isDisabled && Root != null)
             {
-                // Setup keyboard navigation with preventDefault via AccordionKeyboard wrapper
-                await _accordionKeyboard!.SetupKeyboardNavigation(
-                    ElementRef, 
-                    Root.Orientation
-                );
-            }
-            catch (JSException)
-            {
-                // Silently handle JS errors during prerendering
-            }
-            catch (InvalidOperationException)
-            {
-                // Handle cases where JSRuntime is not available
+                try
+                {
+                    // Setup keyboard navigation with preventDefault via AccordionKeyboard wrapper
+                    await _accordionKeyboard!.SetupKeyboardNavigation(
+                        ElementRef,
+                        Root.Orientation
+                    );
+                }
+                catch (JSException) { /* Silently handle */ }
+                catch (InvalidOperationException) { /* Handle JSRuntime unavailable */ }
             }
         }
     }
@@ -120,7 +123,7 @@ else
     private async Task FocusNextTrigger()
     {
         if (Root == null) return;
-        
+
         var nextTrigger = Root.GetNextTrigger(this);
         if (nextTrigger != null)
         {
@@ -131,7 +134,7 @@ else
     private async Task FocusPreviousTrigger()
     {
         if (Root == null) return;
-        
+
         var previousTrigger = Root.GetPreviousTrigger(this);
         if (previousTrigger != null)
         {
@@ -142,7 +145,7 @@ else
     private async Task FocusFirstTrigger()
     {
         if (Root == null) return;
-        
+
         var firstTrigger = Root.GetFirstTrigger();
         if (firstTrigger != null)
         {
@@ -153,7 +156,7 @@ else
     private async Task FocusLastTrigger()
     {
         if (Root == null) return;
-        
+
         var lastTrigger = Root.GetLastTrigger();
         if (lastTrigger != null)
         {
@@ -184,17 +187,10 @@ else
 
     public async ValueTask DisposeAsync()
     {
+        // unregister from item and root
+        Item?.UnregisterTrigger(this);
         Root?.UnregisterTrigger(this);
-
-        // Cleanup keyboard event listeners via wrapper
-        if (_accordionKeyboard != null)
-        {
-            await _accordionKeyboard.DisposeAsync();
-        }
-        
-        if (_bladixDom != null)
-        {
-            await _bladixDom.DisposeAsync();
-        }
+        if (_accordionKeyboard != null) await _accordionKeyboard.DisposeAsync();
+        if (_bladixDom != null) await _bladixDom.DisposeAsync();
     }
 }

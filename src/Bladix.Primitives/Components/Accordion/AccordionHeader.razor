@@ -1,4 +1,5 @@
 @inherits BladixComponentBase
+@implements IDisposable
 
 @if (AsChild)
 {
@@ -7,17 +8,45 @@
 else
 {
     <h3 @attributes="AdditionalAttributes"
-        id="@($"accordion-header-{Item?.Value}")"
+        id="@_headerId"
         data-state="@(Item?.IsOpen == true ? "open" : "closed")"
         data-disabled="@((Item?.Disabled == true || Root?.Disabled == true) ? "true" : null)"
         data-orientation="@Root?.Orientation.ToString().ToLowerInvariant()"
-        class="@Class" style="@Style"
+        class="@Class" 
+        style="@Style"
         @ref="ElementRef">
         @ChildContent
     </h3>
 }
 
 @code {
-    [CascadingParameter] public AccordionRoot? Root { get; set; }
-    [CascadingParameter] public AccordionItem? Item { get; set; }
+    private readonly string _headerId = $"bladix-accordion-header-{Guid.NewGuid():N}";
+
+    /// <summary>
+    /// Gets the parent AccordionRoot component cascaded from the component tree.
+    /// </summary>
+    [CascadingParameter] 
+    public AccordionRoot? Root { get; set; }
+
+    /// <summary>
+    /// Gets the parent AccordionItem component cascaded from the component tree.
+    /// </summary>
+    [CascadingParameter] 
+    public AccordionItem? Item { get; set; }
+
+    /// <summary>
+    /// Gets the unique identifier for this header element.
+    /// Used by AccordionContent's aria-labelledby attribute for accessibility.
+    /// </summary>
+    public string HeaderId => _headerId;
+
+    protected override void OnInitialized()
+    {
+        Item?.RegisterHeader(this);
+    }
+
+    public void Dispose()
+    {
+        Item?.UnregisterHeader(this);
+    }
 }

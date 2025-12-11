@@ -1,0 +1,37 @@
+@inherits BladixComponentBase
+
+<CascadingValue Value="this" IsFixed="true">
+    @ChildContent
+</CascadingValue>
+
+@code {
+    /// <summary>
+    /// The duration from when the mouse enters a trigger until the tooltip opens.
+    /// Default: 700ms
+    /// </summary>
+    [Parameter] public int DelayDuration { get; set; } = 700;
+
+    /// <summary>
+    /// How much time a user has to enter another trigger without incurring a delay again.
+    /// Default: 300ms
+    /// </summary>
+    [Parameter] public int SkipDelayDuration { get; set; } = 300;
+
+    /// <summary>
+    /// When true, trying to hover the content will result in the tooltip closing as the pointer leaves the trigger.
+    /// Default: false
+    /// </summary>
+    [Parameter] public bool DisableHoverableContent { get; set; } = false;
+
+    internal DateTime LastCloseTime { get; set; } = DateTime.MinValue;
+
+    internal bool ShouldSkipDelay()
+    {
+        return (DateTime.Now - LastCloseTime).TotalMilliseconds < SkipDelayDuration;
+    }
+
+    internal void NotifyClose()
+    {
+        LastCloseTime = DateTime.Now;
+    }
+}

@@ -1,4 +1,5 @@
 @inherits BladixComponentBase
+@implements IDisposable
 
 @if (Item?.IsOpen == true || ForceMount)
 {
@@ -10,21 +11,22 @@
     {
         @*
            Renders content panel with:
-           - id: links back to trigger's aria-controls
+           - id: unique identifier for aria-controls linking
            - role="region": semantic landmark for assistive tech
-           - aria-labelledby: references the trigger for accessible name
+           - aria-labelledby: references the trigger (preferred) or header for accessible name
            - hidden: controls visibility (for CSS animations when ForceMount=true)
            - data-state: for CSS-based animations and styling
         *@
         <div @attributes="AdditionalAttributes"
-             id="@($"accordion-content-{Item?.Value}")"
+             id="@_contentId"
              role="region"
-             aria-labelledby="@($"accordion-header-{Item?.Value}")"
+             aria-labelledby="@(Item?.TriggerId ?? Item?.HeaderId)"
              data-state="@(Item?.IsOpen == true ? "open" : "closed")"
              data-disabled="@((Item?.Disabled == true || Root?.Disabled == true) ? "true" : null)"
              data-orientation="@Root?.Orientation.ToString().ToLowerInvariant()"
-             hidden="@(Item?.IsOpen != true && !ForceMount)"
-             class="@Class" style="@Style"
+             hidden="@(Item?.IsOpen != true)"
+             class="@Class" 
+             style="@Style"
              @ref="ElementRef">
             @ChildContent
         </div>
@@ -32,13 +34,48 @@
 }
 
 @code {
-    [CascadingParameter] public AccordionRoot? Root { get; set; }
-    [CascadingParameter] public AccordionItem? Item { get; set; }
+    private readonly string _contentId = $"bladix-accordion-content-{Guid.NewGuid():N}";
 
     /// <summary>
-    /// When true, forces the content to always be present in DOM. 
+    /// Gets the parent AccordionRoot component cascaded from the component tree.
+    /// </summary>
+    [CascadingParameter] 
+    public AccordionRoot? Root { get; set; }
+
+    /// <summary>
+    /// Gets the parent AccordionItem component cascaded from the component tree.
+    /// </summary>
+    [CascadingParameter] 
+    public AccordionItem? Item { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether to force-mount the content in the DOM.
+    /// When true, the content is always present in DOM even when closed.
     /// Useful for controlling animations with CSS.
     /// </summary>
-    [Parameter] public bool ForceMount { get; set; }
+    [Parameter] 
+    public bool ForceMount { get; set; }
 
+    /// <summary>
+    /// Gets the unique identifier for this content element.
+    /// Used by AccordionTrigger's aria-controls attribute for accessibility.
+    /// </summary>
+    public string ContentId => _contentId;
+
+    /// <summary>
+    /// Registers this content with the parent item on initialization.
+    /// </summary>
+    protected override void OnInitialized()
+    {
+        Item?.RegisterContent(this);
+    }
+
+    /// <summary>
+    /// Unregisters this content from the parent item when disposed.
+    /// Implements IDisposable pattern for cleanup.
+    /// </summary>
+    public void Dispose()
+    {
+        Item?.UnregisterContent(this);
+    }
 }

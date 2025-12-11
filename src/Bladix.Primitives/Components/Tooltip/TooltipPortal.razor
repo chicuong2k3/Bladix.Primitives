@@ -1,0 +1,23 @@
+@inherits BladixComponentBase
+
+@if (_root?.IsOpen == true || ForceMount)
+{
+    @ChildContent
+}
+
+@code {
+    private TooltipRoot? _root;
+
+    [CascadingParameter] public TooltipRoot? Root { get; set; }
+
+    /// <summary>
+    /// When true, forces the content to always be present in DOM.
+    /// Useful for controlling animations with CSS.
+    /// </summary>
+    [Parameter] public bool ForceMount { get; set; }
+
+    protected override void OnInitialized()
+    {
+        _root = Root;
+    }
+}

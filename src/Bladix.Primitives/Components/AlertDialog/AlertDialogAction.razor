@@ -1,0 +1,28 @@
+@inherits BladixComponentBase
+
+@if (AsChild)
+{
+    @ChildContent
+}
+else
+{
+    <button type="button"
+            @attributes="AdditionalAttributes"
+            @onclick="HandleClick"
+            class="@Class" style="@Style"
+            @ref="ElementRef">
+        @ChildContent
+    </button>
+}
+
+@code {
+    [CascadingParameter] public AlertDialogRoot? Root { get; set; }
+
+    private async Task HandleClick(MouseEventArgs e)
+    {
+        if (Root != null)
+        {
+            await Root.SetOpen(false);
+        }
+    }
+}

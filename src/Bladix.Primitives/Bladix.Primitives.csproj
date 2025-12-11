@@ -31,4 +31,29 @@
     </None>
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Components\AspectRatio\" />
+    <Folder Include="Components\Collapsible\" />
+    <Folder Include="Components\ContextMenu\" />
+    <Folder Include="Components\Dialog\" />
+    <Folder Include="Components\DropdownMenu\" />
+    <Folder Include="Components\Label\" />
+    <Folder Include="Components\HoverCard\" />
+    <Folder Include="Components\MenuBar\" />
+    <Folder Include="Components\NavigationMenu\" />
+    <Folder Include="Components\Avatar\" />
+    <Folder Include="Components\Toolbar\" />
+    <Folder Include="Components\ToggleGroup\" />
+    <Folder Include="Components\Toggle\" />
+    <Folder Include="Components\Toast\" />
+    <Folder Include="Components\Switch\" />
+    <Folder Include="Components\Slider\" />
+    <Folder Include="Components\Separator\" />
+    <Folder Include="Components\Select\" />
+    <Folder Include="Components\ScrollArea\" />
+    <Folder Include="Components\RadioGroup\" />
+    <Folder Include="Components\Progress\" />
+    <Folder Include="Components\Popover\" />
+  </ItemGroup>
+
 </Project>

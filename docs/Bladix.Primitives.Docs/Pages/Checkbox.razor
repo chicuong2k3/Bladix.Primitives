@@ -1,0 +1,273 @@
+@page "/checkbox"
+
+<PageTitle>Checkbox Showcase - Bladix Primitives</PageTitle>
+
+<div style="max-width: 900px; margin: 0 auto; padding: 2rem;">
+    <h1>Checkbox</h1>
+    <p>
+        The Bladix <code>CheckboxRoot</code> is a Radix-style primitive implementing an accessible checkbox.
+        It supports controlled/uncontrolled usage, an <em>indeterminate</em> state, the <code>AsChild</code> pattern,
+        and a visually-hidden native input so forms and assistive technology behave as expected.
+    </p>
+
+    <hr style="margin: 2rem 0;" />
+
+    <!-- Example 1: Basic Uncontrolled -->
+    <section style="margin-bottom: 3rem;">
+        <h2>1. Basic Uncontrolled</h2>
+        <p>
+            Default value is specified with <code>DefaultChecked</code>. The component manages subsequent state.
+        </p>
+
+        <div style="display:flex; gap:1rem; align-items:center;">
+            <CheckboxRoot DefaultChecked="true" Class="demo-checkbox">
+                <CheckboxIndicator class="demo-indicator">✓</CheckboxIndicator>
+                <CheckboxLabel class="ml-2">Uncontrolled — default checked</CheckboxLabel>
+            </CheckboxRoot>
+        </div>
+    </section>
+
+    <!-- Example 2: Controlled -->
+    <section style="margin-bottom: 3rem;">
+        <h2>2. Controlled</h2>
+        <p>
+            Parent owns the value using <code>Checked</code> + <code>CheckedChanged</code>.
+        </p>
+
+        <div style="display:flex; gap:1rem; align-items:center;">
+            <CheckboxRoot Checked="_controlled" CheckedChanged="OnControlledChanged" Class="demo-checkbox">
+                <CheckboxIndicator class="demo-indicator">✓</CheckboxIndicator>
+                <CheckboxLabel class="ml-2">Controlled</CheckboxLabel>
+            </CheckboxRoot>
+
+            <div>
+                <div><strong>Value:</strong> @_controlled</div>
+                <button class="btn" @onclick="() => _controlled = !_controlled">Toggle from parent</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Example 3: Indeterminate -->
+    <section style="margin-bottom: 3rem;">
+        <h2>3. Indeterminate</h2>
+        <p>
+            Indeterminate represents a partially-selected group. The native DOM <code>indeterminate</code> property
+            is synced via BladixDom interop.
+        </p>
+
+        <div style="display:flex; gap:1rem; align-items:center;">
+            <CheckboxRoot Checked="_parentChecked"
+                          CheckedChanged="OnParentCheckedChanged"
+                          Indeterminate="_parentIndeterminate"
+                          IndeterminateChanged="OnParentIndeterminateChanged"
+                          Class="demo-checkbox">
+                <CheckboxIndicator class="demo-indicator">
+                    @if (_parentIndeterminate)
+                    {
+                        <span>—</span>
+                    }
+                    else if (_parentChecked)
+                    {
+                        <span>✓</span>
+                    }
+                </CheckboxIndicator>
+                <CheckboxLabel class="ml-2">Parent-controlled (indeterminate)</CheckboxLabel>
+            </CheckboxRoot>
+
+            <div>
+                <div><strong>Checked:</strong> @_parentChecked</div>
+                <div><strong>Indeterminate:</strong> @_parentIndeterminate</div>
+                <button class="btn" @onclick="ToggleIndeterminate">Cycle state</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Example 4: Disabled -->
+    <section style="margin-bottom: 3rem;">
+        <h2>4. Disabled</h2>
+        <p>Show disabled state for individual checkboxes or toggling a whole group.</p>
+
+        <div style="margin-bottom:1rem;">
+            <label>
+                <input type="checkbox" @bind="_disableEntireGroup" />
+                Disable entire demo group
+            </label>
+        </div>
+
+        <div style="display:flex; gap:1rem; align-items:center;">
+            <CheckboxRoot DefaultChecked="false" Disabled="_disableEntireGroup" Class="demo-checkbox">
+                <CheckboxIndicator class="demo-indicator">✓</CheckboxIndicator>
+                <CheckboxLabel>Option A</CheckboxLabel>
+            </CheckboxRoot>
+
+            <CheckboxRoot DefaultChecked="true" Disabled="true" Class="demo-checkbox">
+                <CheckboxIndicator class="demo-indicator">✓</CheckboxIndicator>
+                <CheckboxLabel>Always disabled</CheckboxLabel>
+            </CheckboxRoot>
+        </div>
+    </section>
+
+    <!-- Example 5: ForceMount Indicator (useful for animations) -->
+    <section style="margin-bottom: 3rem;">
+        <h2>5. ForceMount Indicator</h2>
+        <p>
+            Force the <code>CheckboxIndicator</code> to render even when unchecked to enable CSS transitions.
+        </p>
+
+        <div style="display:flex; gap:1rem; align-items:center;">
+            <CheckboxRoot DefaultChecked="false" Class="demo-checkbox">
+                <CheckboxIndicator ForceMount="true" class="demo-indicator">✓</CheckboxIndicator>
+                <CheckboxLabel class="ml-2">Force-mounted indicator</CheckboxLabel>
+            </CheckboxRoot>
+        </div>
+    </section>
+
+    <!-- Example 6: Form Integration -->
+    <section style="margin-bottom: 3rem;">
+        <h2>6. Form integration</h2>
+        <p>
+            The component includes a visually-hidden native input so it works with forms and server/post patterns.
+        </p>
+
+        <EditForm Model="_formModel" OnValidSubmit="HandleSubmit">
+            <div style="display:flex; gap:1rem; align-items:center;">
+                <CheckboxRoot Checked="_formModel.Accept" CheckedChanged="v => _formModel.Accept = v ?? false" Name="accept" Class="demo-checkbox">
+                    <CheckboxIndicator class="demo-indicator">✓</CheckboxIndicator>
+                    <CheckboxLabel>Accept terms (form)</CheckboxLabel>
+                </CheckboxRoot>
+
+                <button type="submit">Submit</button>
+            </div>
+        </EditForm>
+
+        @if (_lastSubmitted != null)
+        {
+            <div style="margin-top:0.5rem;"><strong>Submitted:</strong> @_lastSubmitted</div>
+        }
+    </section>
+
+    <hr />
+
+    <h2>API</h2>
+    <ul>
+        <li><code>bool? Checked</code> — Controlled checked value (<code>null</code> = uncontrolled).</li>
+        <li><code>EventCallback&lt;bool?&gt; CheckedChanged</code> — Fired when user toggles the checkbox.</li>
+        <li><code>bool DefaultChecked</code> — Initial value for uncontrolled mode.</li>
+        <li><code>bool Indeterminate</code> — Parent-controlled indeterminate visual state.</li>
+        <li><code>EventCallback&lt;bool&gt; IndeterminateChanged</code> — Fired when indeterminate changes.</li>
+        <li><code>bool Disabled</code>, <code>bool Required</code>, <code>string? Name</code>, <code>string? Value</code></li>
+        <li>Supports <code>AsChild</code>, <code>Class</code>, <code>Style</code>, and extra attributes via <code>AdditionalAttributes</code>.</li>
+    </ul>
+
+    <hr />
+
+    <h2>Accessibility</h2>
+    <ul>
+        <li>The root renders <code>role="checkbox"</code> and <code>aria-checked</code> with values: <code>"true"</code>, <code>"false"</code>, or <code>"mixed"</code> for indeterminate.</li>
+        <li>A native hidden <code>&lt;input type="checkbox"&gt;</code> is present so labels and forms work as expected.</li>
+        <li>Keyboard: Space (and Enter) toggle the checkbox when focused.</li>
+    </ul>
+
+    <style>
+        /* Minimal demo styles for docs */
+        .demo-checkbox {
+            display:inline-flex;
+            align-items:center;
+            gap:0.5rem;
+            padding:0.25rem 0.5rem;
+            border-radius:6px;
+            cursor:pointer;
+            user-select:none;
+        }
+
+        .demo-indicator {
+            display:inline-flex;
+            width:1.25rem;
+            height:1.25rem;
+            align-items:center;
+            justify-content:center;
+            border-radius:4px;
+            border:1px solid #cbd5e1;
+            font-size:0.9rem;
+            line-height:1;
+            transition:background-color 0.12s, color 0.12s, transform 0.12s;
+        }
+
+        .demo-checkbox[data-state="checked"] .demo-indicator {
+            background:#0b74de;
+            color:white;
+            border-color:#0b74de;
+        }
+
+        .demo-checkbox[data-state="indeterminate"] .demo-indicator {
+            background:#6b7280;
+            color:white;
+            border-color:#6b7280;
+        }
+
+        .demo-checkbox[data-disabled="true"] {
+            opacity:0.6;
+            cursor:not-allowed;
+            pointer-events:none;
+        }
+
+        .ml-2 { margin-left: 0.5rem; }
+        .btn { padding:0.25rem 0.5rem; border:1px solid #cbd5e1; background:white; border-radius:4px; }
+    </style>
+</div>
+
+@code {
+    // Controlled example backing fields
+    private bool? _controlled = false;
+    private void OnControlledChanged(bool? v) => _controlled = v;
+
+    // Indeterminate example backing fields
+    private bool _parentChecked = false;
+    private bool _parentIndeterminate = true;
+
+    private Task OnParentCheckedChanged(bool? v)
+    {
+        _parentChecked = v ?? false;
+        // common pattern: clear indeterminate when user explicitly checks
+        if (_parentIndeterminate && _parentChecked)
+            _parentIndeterminate = false;
+        return Task.CompletedTask;
+    }
+
+    private Task OnParentIndeterminateChanged(bool v)
+    {
+        _parentIndeterminate = v;
+        return Task.CompletedTask;
+    }
+
+    private void ToggleIndeterminate()
+    {
+        // Cycle: indeterminate -> checked -> unchecked -> indeterminate
+        if (_parentIndeterminate)
+        {
+            _parentIndeterminate = false;
+            _parentChecked = true;
+        }
+        else if (_parentChecked)
+        {
+            _parentChecked = false;
+        }
+        else
+        {
+            _parentIndeterminate = true;
+        }
+    }
+
+    // Disabled example
+    private bool _disableEntireGroup = false;
+
+    // Form example
+    private class FormModel { public bool Accept { get; set; } }
+    private FormModel _formModel = new();
+    private string? _lastSubmitted;
+
+    private void HandleSubmit()
+    {
+        _lastSubmitted = _formModel.Accept ? "accepted" : "not accepted";
+    }
+}

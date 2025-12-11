@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 
 namespace Bladix.Primitives.Core.Primitive
@@ -134,6 +134,17 @@ namespace Bladix.Primitives.Core.Primitive
             
             var module = await _moduleTask.Value;
             return await module.InvokeAsync<IJSObjectReference?>("getComputedStyle", element);
+        }
+
+        /// <summary>
+        /// Set native checkbox indeterminate value on an input element
+        /// </summary>
+        public async ValueTask SetIndeterminate(ElementReference element, bool value)
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+
+            var module = await _moduleTask.Value;
+            await module.InvokeVoidAsync("setIndeterminate", element, value);
         }
 
         public async ValueTask DisposeAsync()
