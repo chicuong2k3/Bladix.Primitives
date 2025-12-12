@@ -1,0 +1,144 @@
+
+@inject IJSRuntime JSRuntime
+@inherits BladixComponentBase
+@implements IAsyncDisposable
+
+@if (AsChild)
+{
+    @ChildContent
+}
+else
+{
+    <div @attributes="AdditionalAttributes"
+         id="@_contentId"
+         role="tooltip"
+         data-state="@(_root?.IsOpen == true ? "open" : "closed")"
+         data-side="@Side.ToString().ToLowerInvariant()"
+         data-align="@Align.ToString().ToLowerInvariant()"
+         data-bladix-tooltip-content="true"
+         style="@GetPositionStyle()"
+         @onpointerenter="HandlePointerEnter"
+         @onpointerleave="HandlePointerLeave"
+         class="@Class" 
+         @ref="ElementRef">
+        @ChildContent
+    </div>
+}
+
+@code {
+    private TooltipRoot? _root;
+    private BladixDom? _bladixDom;
+    private string _contentId = $"tooltip-content-{Guid.NewGuid():N}";
+
+    [CascadingParameter] public TooltipRoot? Root { get; set; }
+    [CascadingParameter] public TooltipProvider? Provider { get; set; }
+
+    /// <summary>
+    /// The preferred side of the trigger to render against when open.
+    /// Will be reversed when collisions occur and avoidCollisions is enabled.
+    /// Default: Top
+    /// </summary>
+    [Parameter] public TooltipSide Side { get; set; } = TooltipSide.Top;
+
+    /// <summary>
+    /// The distance in pixels from the trigger.
+    /// Default: 0
+    /// </summary>
+    [Parameter] public int SideOffset { get; set; } = 0;
+
+    /// <summary>
+    /// The preferred alignment against the trigger. May change when collisions occur.
+    /// Default: Center
+    /// </summary>
+    [Parameter] public TooltipAlign Align { get; set; } = TooltipAlign.Center;
+
+    /// <summary>
+    /// An offset in pixels from the "start" or "end" alignment options.
+    /// Default: 0
+    /// </summary>
+    [Parameter] public int AlignOffset { get; set; } = 0;
+
+    /// <summary>
+    /// When true, overrides the side and align preferences to prevent collisions with boundary edges.
+    /// Default: true
+    /// </summary>
+    [Parameter] public bool AvoidCollisions { get; set; } = true;
+
+    /// <summary>
+    /// The distance in pixels from the boundary edges where collision detection should occur.
+    /// Default: 0
+    /// </summary>
+    [Parameter] public int CollisionBoundary { get; set; } = 0;
+
+    /// <summary>
+    /// The padding in pixels from the boundary edges where collision detection should occur.
+    /// Default: 0
+    /// </summary>
+    [Parameter] public int CollisionPadding { get; set; } = 0;
+
+    /// <summary>
+    /// The sticky behavior on the align axis. "partial" will keep the content in the boundary as long as the trigger is at least partially in the boundary whilst "always" will keep the content in the boundary regardless.
+    /// Default: Partial
+    /// </summary>
+    [Parameter] public TooltipSticky Sticky { get; set; } = TooltipSticky.Partial;
+
+    /// <summary>
+    /// Whether to hide the content when the trigger becomes fully occluded.
+    /// Default: false
+    /// </summary>
+    [Parameter] public bool HideWhenDetached { get; set; } = false;
+
+    /// <summary>
+    /// When true, prevents the user from interacting with the tooltip content.
+    /// Default: false (follows provider's DisableHoverableContent)
+    /// </summary>
+    [Parameter] public bool? DisableHoverableContent { get; set; }
+
+    protected override void OnInitialized()
+    {
+        _root = Root;
+        _bladixDom = new BladixDom(JSRuntime);
+    }
+
+    private async Task HandlePointerEnter(PointerEventArgs e)
+    {
+        var disableHoverable = DisableHoverableContent ?? Provider?.DisableHoverableContent ?? false;
+        if (!disableHoverable && _root != null)
+        {
+            await _root.HandlePointerEnter();
+        }
+    }
+
+    private async Task HandlePointerLeave(PointerEventArgs e)
+    {
+        if (_root != null)
+        {
+            await _root.HandlePointerLeave();
+        }
+    }
+
+    private string GetPositionStyle()
+    {
+        // Basic positioning - in a full implementation, this would use Floating UI / Popper.js
+        // For now, we'll use CSS custom properties that can be styled externally
+        var styles = new List<string>();
+        
+        if (!string.IsNullOrEmpty(Style))
+        {
+            styles.Add(Style);
+        }
+
+        styles.Add($"--bladix-tooltip-side-offset: {SideOffset}px");
+        styles.Add($"--bladix-tooltip-align-offset: {AlignOffset}px");
+
+        return string.Join("; ", styles);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_bladixDom != null)
+        {
+            await _bladixDom.DisposeAsync();
+        }
+    }
+}

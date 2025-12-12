@@ -1,8 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Bladix.Primitives.Components.Accordion;
+namespace Bladix.Primitives.Core.Enums;
 
 /// <summary>
 /// Specifies the text directionality for content.

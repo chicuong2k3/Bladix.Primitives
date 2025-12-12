@@ -1,0 +1,526 @@
+@page "/tabs"
+
+<PageTitle>Tabs Showcase - Bladix Primitives</PageTitle>
+
+<div style="max-width: 800px; margin: 0 auto; padding: 2rem;">
+    <h1>Tabs Showcase</h1>
+    <p>Test all Tabs component features and use cases</p>
+
+    <hr style="margin: 2rem 0;" />
+
+    <section style="margin-bottom: 3rem;">
+        <h2>1. Basic Tabs (Horizontal)</h2>
+        <p>Click tabs to switch between content panels</p>
+        <p><strong>Current Tab:</strong> @(_basicValue ?? "none")</p>
+
+        <TabsRoot @bind-Value="_basicValue" class="tabs-root">
+            <TabsList class="tabs-list">
+                <TabsTrigger Value="tab1" class="tabs-trigger">
+                    Account
+                </TabsTrigger>
+                <TabsTrigger Value="tab2" class="tabs-trigger">
+                    Password
+                </TabsTrigger>
+                <TabsTrigger Value="tab3" class="tabs-trigger">
+                    Settings
+                </TabsTrigger>
+            </TabsList>
+
+            <TabsContent Value="tab1" class="tabs-content">
+                <div class="tabs-content-inner">
+                    <h3>Account Information</h3>
+                    <p>Make changes to your account here. Click save when you're done.</p>
+                    <div style="margin-top: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem;">Name</label>
+                        <input type="text" placeholder="John Doe" style="padding: 0.5rem; width: 100%; border: 1px solid #e5e7eb; border-radius: 4px;" />
+                    </div>
+                    <div style="margin-top: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem;">Email</label>
+                        <input type="email" placeholder="john@example.com" style="padding: 0.5rem; width: 100%; border: 1px solid #e5e7eb; border-radius: 4px;" />
+                    </div>
+                </div>
+            </TabsContent>
+
+            <TabsContent Value="tab2" class="tabs-content">
+                <div class="tabs-content-inner">
+                    <h3>Password Settings</h3>
+                    <p>Change your password here. After saving, you'll be logged out.</p>
+                    <div style="margin-top: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem;">Current Password</label>
+                        <input type="password" style="padding: 0.5rem; width: 100%; border: 1px solid #e5e7eb; border-radius: 4px;" />
+                    </div>
+                    <div style="margin-top: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem;">New Password</label>
+                        <input type="password" style="padding: 0.5rem; width: 100%; border: 1px solid #e5e7eb; border-radius: 4px;" />
+                    </div>
+                </div>
+            </TabsContent>
+
+            <TabsContent Value="tab3" class="tabs-content">
+                <div class="tabs-content-inner">
+                    <h3>General Settings</h3>
+                    <p>Configure your application preferences.</p>
+                    <div style="margin-top: 1rem;">
+                        <label>
+                            <input type="checkbox" />
+                            Enable notifications
+                        </label>
+                    </div>
+                    <div style="margin-top: 0.5rem;">
+                        <label>
+                            <input type="checkbox" />
+                            Dark mode
+                        </label>
+                    </div>
+                </div>
+            </TabsContent>
+        </TabsRoot>
+    </section>
+
+    <section style="margin-bottom: 3rem;">
+        <h2>2. Tabs with Default Value</h2>
+        <p>The second tab is selected by default using <code>DefaultValue</code></p>
+
+        <TabsRoot DefaultValue="profile" class="tabs-root">
+            <TabsList class="tabs-list">
+                <TabsTrigger Value="overview" class="tabs-trigger">
+                    Overview
+                </TabsTrigger>
+                <TabsTrigger Value="profile" class="tabs-trigger">
+                    Profile
+                </TabsTrigger>
+                <TabsTrigger Value="billing" class="tabs-trigger">
+                    Billing
+                </TabsTrigger>
+            </TabsList>
+
+            <TabsContent Value="overview" class="tabs-content">
+                <div class="tabs-content-inner">
+                    <h3>Overview</h3>
+                    <p>Dashboard overview with statistics and charts.</p>
+                </div>
+            </TabsContent>
+
+            <TabsContent Value="profile" class="tabs-content">
+                <div class="tabs-content-inner">
+                    <h3>Profile (Default)</h3>
+                    <p>This tab is open by default. You can control which tab is initially active.</p>
+                </div>
+            </TabsContent>
+
+            <TabsContent Value="billing" class="tabs-content">
+                <div class="tabs-content-inner">
+                    <h3>Billing</h3>
+                    <p>Manage your subscription and payment methods.</p>
+                </div>
+            </TabsContent>
+        </TabsRoot>
+    </section>
+
+    <section style="margin-bottom: 3rem;">
+        <h2>3. Disabled Tabs</h2>
+        <p>Individual tabs can be disabled</p>
+
+        <TabsRoot DefaultValue="available" class="tabs-root">
+            <TabsList class="tabs-list">
+                <TabsTrigger Value="available" class="tabs-trigger">
+                    Available
+                </TabsTrigger>
+                <TabsTrigger Value="locked" Disabled="true" class="tabs-trigger">
+                    Locked 🔒
+                </TabsTrigger>
+                <TabsTrigger Value="enabled" class="tabs-trigger">
+                    Enabled
+                </TabsTrigger>
+            </TabsList>
+
+            <TabsContent Value="available" class="tabs-content">
+                <div class="tabs-content-inner">
+                    <h3>Available Content</h3>
+                    <p>This tab is accessible and fully functional.</p>
+                </div>
+            </TabsContent>
+
+            <TabsContent Value="locked" class="tabs-content">
+                <div class="tabs-content-inner">
+                    <h3>Locked Content</h3>
+                    <p>You shouldn't see this because the tab is disabled.</p>
+                </div>
+            </TabsContent>
+
+            <TabsContent Value="enabled" class="tabs-content">
+                <div class="tabs-content-inner">
+                    <h3>Enabled Content</h3>
+                    <p>Keyboard navigation automatically skips disabled tabs.</p>
+                </div>
+            </TabsContent>
+        </TabsRoot>
+    </section>
+
+    <section style="margin-bottom: 3rem;">
+        <h2>4. Vertical Tabs</h2>
+        <p>Tabs can be displayed vertically. Use Arrow Up/Down for keyboard navigation.</p>
+
+        <TabsRoot DefaultValue="general" Orientation="Orientation.Vertical" class="tabs-root vertical-tabs">
+            <TabsList class="tabs-list vertical-tabs-list">
+                <TabsTrigger Value="general" class="tabs-trigger">
+                    General
+                </TabsTrigger>
+                <TabsTrigger Value="security" class="tabs-trigger">
+                    Security
+                </TabsTrigger>
+                <TabsTrigger Value="notifications" class="tabs-trigger">
+                    Notifications
+                </TabsTrigger>
+                <TabsTrigger Value="advanced" class="tabs-trigger">
+                    Advanced
+                </TabsTrigger>
+            </TabsList>
+
+            <div style="flex: 1;">
+                <TabsContent Value="general" class="tabs-content">
+                    <div class="tabs-content-inner">
+                        <h3>General Settings</h3>
+                        <p>Configure general application settings and preferences.</p>
+                    </div>
+                </TabsContent>
+
+                <TabsContent Value="security" class="tabs-content">
+                    <div class="tabs-content-inner">
+                        <h3>Security Settings</h3>
+                        <p>Manage your security options including two-factor authentication.</p>
+                    </div>
+                </TabsContent>
+
+                <TabsContent Value="notifications" class="tabs-content">
+                    <div class="tabs-content-inner">
+                        <h3>Notification Preferences</h3>
+                        <p>Control how and when you receive notifications.</p>
+                    </div>
+                </TabsContent>
+
+                <TabsContent Value="advanced" class="tabs-content">
+                    <div class="tabs-content-inner">
+                        <h3>Advanced Options</h3>
+                        <p>Expert settings for power users.</p>
+                    </div>
+                </TabsContent>
+            </div>
+        </TabsRoot>
+    </section>
+
+    <!-- Example 5: Manual Activation Mode -->
+    <section style="margin-bottom: 3rem;">
+        <h2>5. Manual Activation Mode</h2>
+        <p>Arrow keys focus tabs without activating them. Press Enter or Space to activate.</p>
+        <p><strong>Current Tab:</strong> @(_manualValue ?? "none")</p>
+
+        <TabsRoot @bind-Value="_manualValue" DefaultValue="manual1" ActivationMode="ActivationMode.Manual" class="tabs-root">
+            <TabsList class="tabs-list">
+                <TabsTrigger Value="manual1" class="tabs-trigger">
+                    Tab 1
+                </TabsTrigger>
+                <TabsTrigger Value="manual2" class="tabs-trigger">
+                    Tab 2
+                </TabsTrigger>
+                <TabsTrigger Value="manual3" class="tabs-trigger">
+                    Tab 3
+                </TabsTrigger>
+            </TabsList>
+
+            <TabsContent Value="manual1" class="tabs-content">
+                <div class="tabs-content-inner">
+                    <h3>Manual Activation Example</h3>
+                    <p>Use arrow keys to move focus, then press Enter or Space to activate.</p>
+                    <p>This mode is useful when tab content loads slowly or triggers side effects.</p>
+                </div>
+            </TabsContent>
+
+            <TabsContent Value="manual2" class="tabs-content">
+                <div class="tabs-content-inner">
+                    <h3>Tab 2 Content</h3>
+                    <p>Notice how arrow keys only move focus without changing the content.</p>
+                </div>
+            </TabsContent>
+
+            <TabsContent Value="manual3" class="tabs-content">
+                <div class="tabs-content-inner">
+                    <h3>Tab 3 Content</h3>
+                    <p>Manual activation gives users more control over navigation.</p>
+                </div>
+            </TabsContent>
+        </TabsRoot>
+    </section>
+
+    <!-- Example 6: RTL Support -->
+    <section style="margin-bottom: 3rem;">
+        <h2>6. RTL (Right-to-Left) Support</h2>
+        <p>Properly handles RTL languages with reversed keyboard navigation</p>
+
+        <TabsRoot DefaultValue="rtl1" Dir="Direction.Rtl" class="tabs-root" style="direction: rtl;">
+            <TabsList class="tabs-list">
+                <TabsTrigger Value="rtl1" class="tabs-trigger">
+                    علامة التبويب 1
+                </TabsTrigger>
+                <TabsTrigger Value="rtl2" class="tabs-trigger">
+                    علامة التبويب 2
+                </TabsTrigger>
+                <TabsTrigger Value="rtl3" class="tabs-trigger">
+                    علامة التبويب 3
+                </TabsTrigger>
+            </TabsList>
+
+            <TabsContent Value="rtl1" class="tabs-content">
+                <div class="tabs-content-inner">
+                    <h3>محتوى 1</h3>
+                    <p>In RTL mode, Arrow Right moves to previous tab, Arrow Left moves to next.</p>
+                </div>
+            </TabsContent>
+
+            <TabsContent Value="rtl2" class="tabs-content">
+                <div class="tabs-content-inner">
+                    <h3>محتوى 2</h3>
+                    <p>Full support for Arabic, Hebrew, and other RTL languages.</p>
+                </div>
+            </TabsContent>
+
+            <TabsContent Value="rtl3" class="tabs-content">
+                <div class="tabs-content-inner">
+                    <h3>محتوى 3</h3>
+                    <p>All keyboard navigation is automatically reversed for RTL.</p>
+                </div>
+            </TabsContent>
+        </TabsRoot>
+    </section>
+
+    <!-- Example 7: ForceMount Content -->
+    <section style="margin-bottom: 3rem;">
+        <h2>7. Force Mount Content</h2>
+        <p>Keep inactive tab content in the DOM for animations or to preserve state</p>
+
+        <TabsRoot DefaultValue="force1" class="tabs-root">
+            <TabsList class="tabs-list">
+                <TabsTrigger Value="force1" class="tabs-trigger">
+                    Tab 1
+                </TabsTrigger>
+                <TabsTrigger Value="force2" class="tabs-trigger">
+                    Tab 2 (Force Mount)
+                </TabsTrigger>
+                <TabsTrigger Value="force3" class="tabs-trigger">
+                    Tab 3
+                </TabsTrigger>
+            </TabsList>
+
+            <TabsContent Value="force1" class="tabs-content">
+                <div class="tabs-content-inner">
+                    <h3>Regular Content</h3>
+                    <p>This content is removed from DOM when inactive.</p>
+                </div>
+            </TabsContent>
+
+            <TabsContent Value="force2" ForceMount="true" class="tabs-content force-mount-content">
+                <div class="tabs-content-inner">
+                    <h3>Force Mounted Content</h3>
+                    <p>This content stays in the DOM even when inactive (check with DevTools).</p>
+                    <p>Useful for CSS animations or preserving component state.</p>
+                    <input type="text" placeholder="Type something and switch tabs..." style="padding: 0.5rem; width: 100%; border: 1px solid #e5e7eb; border-radius: 4px; margin-top: 0.5rem;" />
+                </div>
+            </TabsContent>
+
+            <TabsContent Value="force3" class="tabs-content">
+                <div class="tabs-content-inner">
+                    <h3>Regular Content</h3>
+                    <p>Go to Tab 2, type something, then switch tabs. The input value is preserved!</p>
+                </div>
+            </TabsContent>
+        </TabsRoot>
+    </section>
+
+    <!-- Example 8: Accessibility Features -->
+    <section style="margin-bottom: 3rem;">
+        <h2>8. Accessibility Features</h2>
+        <p>Full keyboard navigation support following WAI-ARIA Tabs pattern</p>
+
+        <div style="background: #f9fafb; padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem;">
+            <h3 style="margin-top: 0;">Keyboard Shortcuts</h3>
+            <ul style="margin: 0; padding-left: 1.5rem;">
+                <li><strong>Tab:</strong> Moves focus into and out of the tab list</li>
+                <li><strong>Arrow Left/Right (Horizontal):</strong> Navigate between tabs</li>
+                <li><strong>Arrow Up/Down (Vertical):</strong> Navigate between tabs</li>
+                <li><strong>Home:</strong> Focus first tab</li>
+                <li><strong>End:</strong> Focus last tab</li>
+                <li><strong>Enter/Space (Manual Mode):</strong> Activate focused tab</li>
+            </ul>
+        </div>
+
+        <TabsRoot DefaultValue="a11y1" class="tabs-root">
+            <TabsList class="tabs-list">
+                <TabsTrigger Value="a11y1" class="tabs-trigger">
+                    ARIA Attributes
+                </TabsTrigger>
+                <TabsTrigger Value="a11y2" class="tabs-trigger">
+                    Focus Management
+                </TabsTrigger>
+                <TabsTrigger Value="a11y3" class="tabs-trigger">
+                    Screen Readers
+                </TabsTrigger>
+            </TabsList>
+
+            <TabsContent Value="a11y1" class="tabs-content">
+                <div class="tabs-content-inner">
+                    <h3>ARIA Attributes</h3>
+                    <p>✅ <code>role="tablist"</code> on TabsList</p>
+                    <p>✅ <code>role="tab"</code> on TabsTrigger</p>
+                    <p>✅ <code>role="tabpanel"</code> on TabsContent</p>
+                    <p>✅ <code>aria-selected</code> indicates active tab</p>
+                    <p>✅ <code>aria-controls</code> links tab to its panel</p>
+                    <p>✅ <code>aria-orientation</code> for vertical/horizontal layout</p>
+                </div>
+            </TabsContent>
+
+            <TabsContent Value="a11y2" class="tabs-content">
+                <div class="tabs-content-inner">
+                    <h3>Focus Management</h3>
+                    <p>✅ Active tab has <code>tabindex="0"</code></p>
+                    <p>✅ Inactive tabs have <code>tabindex="-1"</code></p>
+                    <p>✅ Disabled tabs are properly skipped</p>
+                    <p>✅ Focus visible indicators for keyboard users</p>
+                </div>
+            </TabsContent>
+
+            <TabsContent Value="a11y3" class="tabs-content">
+                <div class="tabs-content-inner">
+                    <h3>Screen Reader Support</h3>
+                    <p>✅ Announces tab role and selection state</p>
+                    <p>✅ Indicates total number of tabs</p>
+                    <p>✅ Announces which tab is active</p>
+                    <p>✅ Proper labeling and relationships</p>
+                </div>
+            </TabsContent>
+        </TabsRoot>
+    </section>
+</div>
+
+<style>
+    /* Basic Tabs Styles */
+    .tabs-root {
+        background-color: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .tabs-list {
+        display: flex;
+        border-bottom: 1px solid #e5e7eb;
+        background-color: #f9fafb;
+    }
+
+    .tabs-trigger {
+        all: unset;
+        font-family: inherit;
+        background-color: transparent;
+        padding: 0.75rem 1.5rem;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        color: #6b7280;
+        border-bottom: 2px solid transparent;
+        transition: all 0.2s;
+        position: relative;
+    }
+
+    .tabs-trigger:hover {
+        background-color: #f3f4f6;
+        color: #111827;
+    }
+
+    .tabs-trigger:focus-visible {
+        outline: 2px solid #3b82f6;
+        outline-offset: -2px;
+        z-index: 1;
+    }
+
+    .tabs-trigger[data-state="active"] {
+        color: #3b82f6;
+        border-bottom-color: #3b82f6;
+        background-color: white;
+    }
+
+    .tabs-trigger[data-disabled="true"] {
+        opacity: 0.5;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+
+    .tabs-content {
+        padding: 1.5rem;
+        font-size: 14px;
+        line-height: 1.6;
+    }
+
+    .tabs-content[data-state="inactive"] {
+        display: none;
+    }
+
+    .tabs-content-inner h3 {
+        margin-top: 0;
+        margin-bottom: 0.5rem;
+        color: #111827;
+    }
+
+    /* Vertical Tabs Styles */
+    .vertical-tabs {
+        display: flex;
+        flex-direction: row;
+    }
+
+    .vertical-tabs-list {
+        flex-direction: column;
+        border-bottom: none;
+        border-right: 1px solid #e5e7eb;
+        min-width: 200px;
+    }
+
+    .vertical-tabs .tabs-trigger {
+        border-bottom: none;
+        border-right: 2px solid transparent;
+        text-align: left;
+        width: 100%;
+    }
+
+    .vertical-tabs .tabs-trigger[data-state="active"] {
+        border-right-color: #3b82f6;
+        border-bottom-color: transparent;
+    }
+
+    /* Force Mount Content */
+    .force-mount-content[data-state="inactive"] {
+        display: block;
+        opacity: 0.5;
+        pointer-events: none;
+    }
+
+    code {
+        background-color: #e5e7eb;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-size: 0.9em;
+        font-family: 'Courier New', monospace;
+    }
+
+    hr {
+        border: none;
+        border-top: 1px solid #e5e7eb;
+    }
+
+    ul {
+        line-height: 1.8;
+    }
+</style>
+
+@code {
+    private string? _basicValue;
+    private string? _manualValue;
+}
+

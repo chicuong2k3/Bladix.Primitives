@@ -1,0 +1,31 @@
+@inherits BladixComponentBase
+
+@if (AsChild)
+{
+    @ChildContent
+}
+else
+{
+    if (Root != null)
+    {
+        if (ForceMount || Root.IsChecked || Root.IsIndeterminate)
+        {
+            <span @attributes="AdditionalAttributes"
+                  data-state="@Root.DataState"
+                  class="@Class"
+                  style="@Style"
+                  aria-hidden="true">
+                @ChildContent
+            </span>
+        }
+    }
+}
+
+@code {
+    [CascadingParameter] public CheckboxRoot? Root { get; set; }
+
+    /// <summary>
+    /// Force the indicator to render even when unchecked (useful for CSS animations).
+    /// </summary>
+    [Parameter] public bool ForceMount { get; set; } = false;
+}

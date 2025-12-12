@@ -1,0 +1,31 @@
+@inject IJSRuntime JSRuntime
+@inherits BladixComponentBase
+@implements IAsyncDisposable
+
+@if (Root?.IsOpen == true || ForceMount)
+{
+    @if (AsChild)
+    {
+        @ChildContent
+    }
+    else
+    {
+        <div @attributes="AdditionalAttributes"
+             data-state="@(Root?.IsOpen == true ? "open" : "closed")"
+             data-bladix-alert-dialog-overlay="true"
+             class="@Class" style="@Style"
+             @ref="ElementRef">
+            @ChildContent
+        </div>
+    }
+}
+
+@code {
+    [CascadingParameter] public AlertDialogRoot? Root { get; set; }
+    [Parameter] public bool ForceMount { get; set; }
+
+    public async ValueTask DisposeAsync()
+    {
+        GC.SuppressFinalize(this);
+    }
+}

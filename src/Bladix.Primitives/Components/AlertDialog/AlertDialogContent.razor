@@ -1,0 +1,82 @@
+@inject IJSRuntime JSRuntime
+@inherits BladixComponentBase
+@implements IAsyncDisposable
+
+@if (Root?.IsOpen == true || ForceMount)
+{
+    @if (AsChild)
+    {
+        @ChildContent
+    }
+    else
+    {
+        <div @attributes="AdditionalAttributes"
+             role="alertdialog"
+             aria-describedby="@_descriptionId"
+             aria-labelledby="@_titleId"
+             data-state="@(Root?.IsOpen == true ? "open" : "closed")"
+             data-bladix-alert-dialog-content="true"
+             tabindex="-1"
+             @onkeydown="HandleKeyDown"
+             class="@Class" style="@Style"
+             @ref="ElementRef">
+            <CascadingValue Value="this" IsFixed="true">
+                @ChildContent
+            </CascadingValue>
+        </div>
+    }
+}
+
+@code {
+    private string _titleId = $"bladix-alert-dialog-title-{Guid.NewGuid():N}";
+    private string _descriptionId = $"bladix-alert-dialog-description-{Guid.NewGuid():N}";
+    private BladixDom? _bladixDom;
+
+    [CascadingParameter] public AlertDialogRoot? Root { get; set; }
+    [Parameter] public bool ForceMount { get; set; }
+    [Parameter] public EventCallback OnEscapeKeyDown { get; set; }
+    [Parameter] public EventCallback OnOpenAutoFocus { get; set; }
+    [Parameter] public EventCallback OnCloseAutoFocus { get; set; }
+
+    public string TitleId => _titleId;
+    public string DescriptionId => _descriptionId;
+
+    protected override void OnInitialized()
+    {
+        _bladixDom = new BladixDom(JSRuntime);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && Root?.IsOpen == true)
+        {
+            try
+            {
+                await _bladixDom!.Focus(ElementRef, preventScroll: false);
+                await OnOpenAutoFocus.InvokeAsync();
+            }
+            catch (JSException)
+            {
+                // Handle JS errors during prerendering
+            }
+        }
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Escape")
+        {
+            await OnEscapeKeyDown.InvokeAsync();
+            // AlertDialog should NOT close on Escape - that's a key difference from Dialog
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_bladixDom != null)
+        {
+            await _bladixDom.DisposeAsync();
+        }
+        GC.SuppressFinalize(this);
+    }
+}

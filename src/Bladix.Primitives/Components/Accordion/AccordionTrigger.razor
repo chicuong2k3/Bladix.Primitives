@@ -9,17 +9,20 @@
 else
 {
     <button type="button"
-            id="@_triggerId"
+            id="@Item?.TriggerId"
             @attributes="AdditionalAttributes"
             @onclick="HandleClick"
+            @onfocus="HandleFocus"
             @onkeydown="HandleKeyDown"
             aria-expanded="@(Item?.IsOpen == true ? "true" : "false")"
-            aria-controls="@($"accordion-content-{Item?.Value}")"
+            aria-controls="@(Item?.ContentId)"
+            aria-disabled="@(_isDisabled ? "true" : null)"
+            tabindex="@(Root?.GetTabIndex(this) ?? 0)"
             data-state="@(Item?.IsOpen == true ? "open" : "closed")"
             data-disabled="@(_isDisabled ? "true" : null)"
             data-orientation="@Root?.Orientation.ToString().ToLowerInvariant()"
-            disabled="@_isDisabled"
-            class="@Class"
+            disabled="@(_isDisabled ? true : (bool?)null)"
+            class="@Class" style="@Style"
             @ref="ElementRef">
         @ChildContent
     </button>
@@ -27,9 +30,12 @@ else
 
 @code {
     private bool _isDisabled;
-    private string _triggerId = $"accordion-trigger-{Guid.NewGuid():N}";
     private BladixDom? _bladixDom;
     private AccordionKeyboard? _accordionKeyboard;
+
+    // keyboard setup state helpers to allow setup when a trigger becomes enabled after initial render
+    private bool _keyboardSetupRequested;
+    private bool _keyboardSetupInitialized;
 
     public bool IsDisabled => _isDisabled;
 
@@ -40,43 +46,77 @@ else
     {
         _bladixDom = new BladixDom(JSRuntime);
         _accordionKeyboard = new AccordionKeyboard(JSRuntime);
-        Root?.RegisterTrigger(this);
+        // registration moved to OnAfterRenderAsync to preserve DOM order
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender && !_isDisabled && Root != null)
+        if (firstRender || _keyboardSetupRequested)
         {
-            try
+            // register with item and root after render to preserve DOM order for keyboard navigation
+            Item?.RegisterTrigger(this);
+            Root?.RegisterTrigger(this);
+
+            // ensure keyboard setup if this trigger is enabled
+            if (!_isDisabled && Root != null && _accordionKeyboard != null && !_keyboardSetupInitialized)
             {
-                // Setup keyboard navigation with preventDefault via AccordionKeyboard wrapper
-                await _accordionKeyboard!.SetupKeyboardNavigation(
-                    ElementRef, 
-                    Root.Orientation
-                );
-            }
-            catch (JSException)
-            {
-                // Silently handle JS errors during prerendering
-            }
-            catch (InvalidOperationException)
-            {
-                // Handle cases where JSRuntime is not available
+                try
+                {
+                    await _accordionKeyboard!.SetupKeyboardNavigation(
+                        ElementRef,
+                        Root.Orientation
+                    );
+                    _keyboardSetupInitialized = true;
+                    _keyboardSetupRequested = false;
+                }
+                catch (JSException) { /* Silently handle */ }
+                catch (InvalidOperationException) { /* Handle JSRuntime unavailable */ }
             }
         }
     }
 
     protected override void OnParametersSet()
     {
+        var prevDisabled = _isDisabled;
         _isDisabled = (Item?.Disabled == true || Root?.Disabled == true);
+
+        // If this trigger became disabled and was the tabbable trigger, move tabbable to first non-disabled
+        if (_isDisabled && Root != null && Root.GetTabIndex(this) == 0)
+        {
+            Root.SetTabbableTrigger(Root.GetFirstTrigger());
+        }
+
+        // If this trigger became enabled (was disabled before) ensure there's a tabbable trigger.
+        if (prevDisabled && !_isDisabled && Root != null)
+        {
+            if (Root.GetTabIndex(this) == -1 || Root.GetFirstTrigger() == this)
+            {
+                Root.SetTabbableTrigger(this);
+            }
+
+            // request keyboard setup for next render (we avoid calling JSRuntime synchronously here)
+            _keyboardSetupRequested = true;
+            _keyboardSetupInitialized = false;
+        }
     }
 
     private async Task HandleClick(MouseEventArgs e)
     {
-        if (!_isDisabled)
+        if (!_isDisabled && Item != null)
         {
-            await Item?.Toggle()!;
+            // Ensure roving tabindex follows interaction
+            Root?.SetTabbableTrigger(this);
+            await Item.Toggle();
         }
+    }
+
+    private Task HandleFocus(FocusEventArgs e)
+    {
+        if (_isDisabled || Root == null) return Task.CompletedTask;
+
+        // When a trigger receives focus (mouse or programmatic), make it the tabbable trigger
+        Root.SetTabbableTrigger(this);
+        return Task.CompletedTask;
     }
 
     /// <summary>
@@ -119,7 +159,7 @@ else
     private async Task FocusNextTrigger()
     {
         if (Root == null) return;
-        
+
         var nextTrigger = Root.GetNextTrigger(this);
         if (nextTrigger != null)
         {
@@ -130,7 +170,7 @@ else
     private async Task FocusPreviousTrigger()
     {
         if (Root == null) return;
-        
+
         var previousTrigger = Root.GetPreviousTrigger(this);
         if (previousTrigger != null)
         {
@@ -141,7 +181,7 @@ else
     private async Task FocusFirstTrigger()
     {
         if (Root == null) return;
-        
+
         var firstTrigger = Root.GetFirstTrigger();
         if (firstTrigger != null)
         {
@@ -152,7 +192,7 @@ else
     private async Task FocusLastTrigger()
     {
         if (Root == null) return;
-        
+
         var lastTrigger = Root.GetLastTrigger();
         if (lastTrigger != null)
         {
@@ -162,6 +202,7 @@ else
 
     /// <summary>
     /// Focuses a trigger element using BladixDom utility.
+    /// Also notifies Root to update the tabbable (roving tabindex).
     /// </summary>
     private async Task FocusTrigger(AccordionTrigger trigger)
     {
@@ -170,6 +211,8 @@ else
         try
         {
             await _bladixDom.Focus(trigger.ElementRef, preventScroll: false);
+            // update root's tabbable trigger so tab order reflects the newly focused item
+            Root?.SetTabbableTrigger(trigger);
         }
         catch (JSException)
         {
@@ -183,17 +226,10 @@ else
 
     public async ValueTask DisposeAsync()
     {
+        // unregister from item and root
+        Item?.UnregisterTrigger(this);
         Root?.UnregisterTrigger(this);
-
-        // Cleanup keyboard event listeners via wrapper
-        if (_accordionKeyboard != null)
-        {
-            await _accordionKeyboard.DisposeAsync();
-        }
-        
-        if (_bladixDom != null)
-        {
-            await _bladixDom.DisposeAsync();
-        }
+        if (_accordionKeyboard != null) await _accordionKeyboard.DisposeAsync();
+        if (_bladixDom != null) await _bladixDom.DisposeAsync();
     }
 }

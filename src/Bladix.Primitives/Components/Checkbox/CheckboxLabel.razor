@@ -1,0 +1,28 @@
+@inherits BladixComponentBase
+
+@if (AsChild)
+{
+    @ChildContent
+}
+else
+{
+    if (Root != null)
+    {
+        <label @attributes="AdditionalAttributes"
+               for="@Root.Id"
+               class="@Class"
+               style="@Style">
+            @ChildContent
+        </label>
+    }
+    else
+    {
+        <label @attributes="AdditionalAttributes" class="@Class" style="@Style">
+            @ChildContent
+        </label>
+    }
+}
+
+@code {
+    [CascadingParameter] public CheckboxRoot? Root { get; set; }
+}

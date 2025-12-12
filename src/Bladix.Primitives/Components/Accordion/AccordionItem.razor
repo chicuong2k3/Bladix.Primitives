@@ -1,12 +1,5 @@
 @inherits BladixComponentBase
 
-@*
-   AccordionItem wraps Collapsible.Root
-   - Each item manages its own collapsed/expanded state via context from Root
-   - Renders data-state attribute for styling
-   - Passes value prop to identify this item
-*@
-
 @if (AsChild)
 {
     <CascadingValue Value="this" IsFixed="true">
@@ -15,17 +8,13 @@
 }
 else
 {
-    @*
-       Renders <div> with:
-       - data-state: "open" | "closed" for CSS targeting
-       - data-disabled: present when disabled
-       - data-orientation: inherited from Root
-    *@
     <div @attributes="AdditionalAttributes"
          data-state="@(_isOpen ? "open" : "closed")"
          data-disabled="@(Disabled ? "true" : null)"
          data-orientation="@Root?.Orientation.ToString().ToLowerInvariant()"
+         data-bladix-collection-item="true"
          class="@Class"
+         style="@Style"
          @ref="ElementRef">
         <CascadingValue Value="this" IsFixed="true">
             @ChildContent
@@ -35,17 +24,26 @@ else
 
 @code {
     private bool _isOpen;
+    private readonly string _fallbackHeaderId = $"bladix-accordion-header-{Guid.NewGuid():N}";
+    private readonly string _fallbackContentId = $"bladix-accordion-content-{Guid.NewGuid():N}";
+    private readonly string _fallbackTriggerId = $"bladix-accordion-trigger-{Guid.NewGuid():N}";
+    private AccordionHeader? _header;
+    private AccordionContent? _content;
+    private AccordionTrigger? _trigger;
 
     [CascadingParameter] public AccordionRoot? Root { get; set; }
-    
-    // Unique identifier for this item
-    // Used by Root to track which items are open
+
     [Parameter] public string Value { get; set; } = string.Empty;
-    
-    // When true, prevents this specific item from being interactive
     [Parameter] public bool Disabled { get; set; }
-    
+
     public bool IsOpen => _isOpen;
+    public string HeaderId => _fallbackHeaderId + (string.IsNullOrEmpty(Value) ? string.Empty : $"-{Value}");
+    public string ContentId => _fallbackContentId + (string.IsNullOrEmpty(Value) ? string.Empty : $"-{Value}");
+    public string TriggerId => _fallbackTriggerId + (string.IsNullOrEmpty(Value) ? string.Empty : $"-{Value}");
+
+    public bool HasHeader => _header != null;
+    public bool HasContent => _content != null;
+    public bool HasTrigger => _trigger != null;
 
     protected override void OnParametersSet()
     {
@@ -55,10 +53,16 @@ else
         }
     }
 
-    // Radix UI: Internal method called by Trigger to toggle this item
     public async Task Toggle()
     {
         if (Disabled || Root?.Disabled == true) return;
-        await Root?.ToggleItem(Value)!;
+        if (Root != null) await Root.ToggleItem(Value);
     }
+
+    internal void RegisterHeader(AccordionHeader header) => _header = header;
+    internal void UnregisterHeader(AccordionHeader header) { if (_header == header) _header = null; }
+    internal void RegisterContent(AccordionContent content) => _content = content;
+    internal void UnregisterContent(AccordionContent content) { if (_content == content) _content = null; }
+    internal void RegisterTrigger(AccordionTrigger trigger) => _trigger = trigger;
+    internal void UnregisterTrigger(AccordionTrigger trigger) { if (_trigger == trigger) _trigger = null; }
 }

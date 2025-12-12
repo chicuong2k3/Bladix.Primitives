@@ -1,0 +1,82 @@
+@inject IJSRuntime JSRuntime
+@inherits BladixComponentBase
+@implements IAsyncDisposable
+
+@if (AsChild)
+{
+    @ChildContent
+}
+else
+{
+    <button type="button"
+            @attributes="AdditionalAttributes"
+            @onpointerenter="HandlePointerEnter"
+            @onpointerleave="HandlePointerLeave"
+            @onpointerdown="HandlePointerDown"
+            @onfocus="HandleFocus"
+            @onblur="HandleBlur"
+            aria-describedby="@(_root?.IsOpen == true ? $"tooltip-content-{_triggerId}" : null)"
+            data-state="@(_root?.IsOpen == true ? "open" : "closed")"
+            data-bladix-tooltip-trigger="true"
+            class="@Class" style="@Style"
+            @ref="ElementRef">
+        @ChildContent
+    </button>
+}
+
+@code {
+    private TooltipRoot? _root;
+    private string _triggerId = Guid.NewGuid().ToString("N");
+
+    [CascadingParameter] public TooltipRoot? Root { get; set; }
+
+    protected override void OnInitialized()
+    {
+        _root = Root;
+    }
+
+    private async Task HandlePointerEnter(PointerEventArgs e)
+    {
+        if (_root != null)
+        {
+            await _root.HandlePointerEnter();
+        }
+    }
+
+    private async Task HandlePointerLeave(PointerEventArgs e)
+    {
+        if (_root != null)
+        {
+            await _root.HandlePointerLeave();
+        }
+    }
+
+    private async Task HandlePointerDown(PointerEventArgs e)
+    {
+        if (_root != null)
+        {
+            await _root.HandlePointerDown();
+        }
+    }
+
+    private async Task HandleFocus(FocusEventArgs e)
+    {
+        if (_root != null)
+        {
+            await _root.HandleFocus();
+        }
+    }
+
+    private async Task HandleBlur(FocusEventArgs e)
+    {
+        if (_root != null)
+        {
+            await _root.HandleBlur();
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await Task.CompletedTask;
+    }
+}

@@ -1,0 +1,245 @@
+@page "/alert-dialog"
+
+<PageTitle>AlertDialog Showcase - Bladix Primitives</PageTitle>
+
+<div class="page-container">
+    <h1>AlertDialog Showcase</h1>
+    <p>A modal dialog that interrupts the user with important content and expects a response.</p>
+
+    <hr />
+
+    <!-- Example 1: Basic AlertDialog (two-way bind) -->
+    <section class="example">
+        <h2>1. Basic AlertDialog</h2>
+        <p>Opens a modal dialog that requires user action.</p>
+
+        <div class="example-controls">
+            <button class="trigger-button" @onclick="() => _isOpen = true">Open Basic Dialog</button>
+            <span class="status">State: <strong>@(_isOpen ? "Open" : "Closed")</strong></span>
+        </div>
+
+        <AlertDialogRoot @bind-Open="_isOpen">
+            <AlertDialogTrigger class="trigger-button">Delete Account</AlertDialogTrigger>
+
+            <AlertDialogPortal>
+                <AlertDialogOverlay class="alert-dialog-overlay" />
+                <AlertDialogContent class="alert-dialog-content" aria-labelledby="basic-title" aria-describedby="basic-desc">
+                    <AlertDialogTitle id="basic-title" class="alert-dialog-title">Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription id="basic-desc" class="alert-dialog-description">
+                        This action cannot be undone. This will permanently delete your account and remove your data from our servers.
+                    </AlertDialogDescription>
+
+                    <div class="alert-dialog-actions">
+                        <AlertDialogCancel class="button-cancel" @onclick="CancelBasic">Cancel</AlertDialogCancel>
+                        <AlertDialogAction class="button-action" @onclick="ConfirmBasic">Yes, delete account</AlertDialogAction>
+                    </div>
+                </AlertDialogContent>
+            </AlertDialogPortal>
+        </AlertDialogRoot>
+    </section>
+
+    <!-- Example 2: Controlled AlertDialog (external state) -->
+    <section class="example">
+        <h2>2. Controlled AlertDialog</h2>
+        <p>This dialog's open state is controlled externally.</p>
+
+        <div class="example-controls">
+            <button class="trigger-button" @onclick="() => _isControlled = true">Open Programmatically</button>
+            <button class="trigger-button" @onclick="() => _isControlled = false">Close Programmatically</button>
+            <span class="status">State: <strong>@(_isControlled ? "Open" : "Closed")</strong></span>
+        </div>
+
+        <AlertDialogRoot Open="_isControlled" OpenChanged="HandleOpenChanged">
+            <AlertDialogTrigger class="trigger-button">Open via Trigger</AlertDialogTrigger>
+
+            <AlertDialogPortal>
+                <AlertDialogOverlay class="alert-dialog-overlay" />
+                <AlertDialogContent class="alert-dialog-content" aria-labelledby="ctrl-title" aria-describedby="ctrl-desc">
+                    <AlertDialogTitle id="ctrl-title" class="alert-dialog-title">Controlled Dialog</AlertDialogTitle>
+                    <AlertDialogDescription id="ctrl-desc" class="alert-dialog-description">
+                        The open state of this dialog is managed by a field in the parent component.
+                    </AlertDialogDescription>
+
+                    <div class="alert-dialog-actions">
+                        <AlertDialogCancel class="button-cancel" @onclick="() => _isControlled = false">Cancel</AlertDialogCancel>
+                        <AlertDialogAction class="button-action" @onclick="ConfirmControlled">Confirm</AlertDialogAction>
+                    </div>
+                </AlertDialogContent>
+            </AlertDialogPortal>
+        </AlertDialogRoot>
+    </section>
+
+    <!-- Example 3: Custom Styled AlertDialog -->
+    <section class="example">
+        <h2>3. Custom Styled AlertDialog</h2>
+        <p>Dialog with warning styling and animations.</p>
+
+        <AlertDialogRoot @bind-Open="_isCustom">
+            <AlertDialogTrigger class="trigger-button warning">⚠️ Warning Action</AlertDialogTrigger>
+
+            <AlertDialogPortal>
+                <AlertDialogOverlay class="alert-dialog-overlay animated" />
+                <AlertDialogContent class="alert-dialog-content animated warning-theme" aria-labelledby="custom-title" aria-describedby="custom-desc">
+                    <AlertDialogTitle id="custom-title" class="alert-dialog-title">⚠️ Warning</AlertDialogTitle>
+                    <AlertDialogDescription id="custom-desc" class="alert-dialog-description">
+                        This is a destructive action with custom styling and animations.
+                    </AlertDialogDescription>
+
+                    <div class="alert-dialog-actions">
+                        <AlertDialogCancel class="button-cancel" @onclick="() => _isCustom = false">Go Back</AlertDialogCancel>
+                        <AlertDialogAction class="button-action danger" @onclick="ConfirmCustom">Proceed Anyway</AlertDialogAction>
+                    </div>
+                </AlertDialogContent>
+            </AlertDialogPortal>
+        </AlertDialogRoot>
+    </section>
+</div>
+
+<style>
+    .page-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .example {
+        margin-bottom: 2.5rem;
+    }
+
+    .example-controls {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .status {
+        font-size: 0.95rem;
+        color: #374151;
+    }
+
+    /* Trigger Button */
+    .trigger-button {
+        padding: 0.625rem 1.25rem;
+        border: none;
+        border-radius: 6px;
+        background-color: #3b82f6;
+        color: white;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+
+    .trigger-button:hover { background-color: #2563eb; }
+
+    .trigger-button.warning {
+        background-color: #f59e0b;
+    }
+
+    .trigger-button.warning:hover {
+        background-color: #d97706;
+    }
+
+    /* Overlay */
+    .alert-dialog-overlay {
+        position: fixed;
+        inset: 0;
+        background-color: rgba(0,0,0,0.5);
+        z-index: 50;
+    }
+
+    .alert-dialog-overlay.animated[data-state="open"] { animation: fadeIn 200ms ease-out; }
+    .alert-dialog-overlay.animated[data-state="closed"] { animation: fadeOut 200ms ease-in; }
+
+    /* Content */
+    .alert-dialog-content {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: white;
+        border-radius: 8px;
+        padding: 1.5rem;
+        box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+        max-width: 450px;
+        width: 90%;
+        z-index: 51;
+    }
+
+    .alert-dialog-content.animated[data-state="open"] { animation: contentShow 200ms ease-out; }
+    .alert-dialog-content.animated[data-state="closed"] { animation: contentHide 200ms ease-in; }
+
+    .alert-dialog-content.warning-theme { border: 2px solid #f59e0b; }
+    .alert-dialog-content:focus { outline: none; }
+
+    /* Title & Description */
+    .alert-dialog-title { margin: 0 0 0.75rem 0; font-size: 18px; font-weight: 600; color: #111827; }
+    .alert-dialog-description { margin: 0 0 1.5rem 0; font-size: 14px; line-height: 1.5; color: #6b7280; }
+
+    /* Actions */
+    .alert-dialog-actions { display: flex; justify-content: flex-end; gap: 0.75rem; }
+
+    .button-cancel, .button-action {
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 4px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .button-cancel {
+        background-color: #f3f4f6;
+        color: #374151;
+    }
+
+    .button-cancel:hover { background-color: #e5e7eb; }
+
+    .button-action {
+        background-color: #3b82f6;
+        color: white;
+    }
+
+    .button-action:hover { background-color: #2563eb; }
+
+    .button-action.danger { background-color: #ef4444; }
+    .button-action.danger:hover { background-color: #dc2626; }
+
+    hr { border: none; border-top: 1px solid #e5e7eb; margin: 1.75rem 0; }
+</style>
+
+@code {
+    private bool _isOpen;
+    private bool _isControlled;
+    private bool _isCustom;
+
+    private void HandleOpenChanged(bool value)
+    {
+        _isControlled = value;
+    }
+
+    private void ConfirmBasic()
+    {
+        // perform confirmation logic (delete account ...) then close
+        _isOpen = false;
+    }
+
+    private void CancelBasic()
+    {
+        _isOpen = false;
+    }
+
+    private void ConfirmControlled()
+    {
+        // perform confirmation logic for controlled dialog, then close
+        _isControlled = false;
+    }
+
+    private void ConfirmCustom()
+    {
+        // perform custom confirm actions, then close
+        _isCustom = false;
+    }
+}

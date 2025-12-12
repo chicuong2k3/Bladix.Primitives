@@ -1,0 +1,152 @@
+@inject IJSRuntime JSRuntime
+@inherits BladixComponentBase
+@implements IAsyncDisposable
+
+@if (AsChild)
+{
+    @ChildContent
+}
+else
+{
+    <button type="button"
+            id="@_triggerId"
+            @attributes="AdditionalAttributes"
+            @onclick="HandleClick"
+            @onkeydown="HandleKeyDown"
+            @onkeydown:preventDefault="_shouldPreventDefault"
+            role="tab"
+            aria-selected="@(_isActive ? "true" : "false")"
+            aria-controls="@($"tabs-content-{Value}")"
+            tabindex="@(_isActive ? 0 : -1)"
+            data-state="@(_isActive ? "active" : "inactive")"
+            data-disabled="@(Disabled ? "true" : null)"
+            data-orientation="@Root?.Orientation.ToString().ToLowerInvariant()"
+            data-bladix-tabs-trigger="true"
+            disabled="@Disabled"
+            class="@Class" style="@Style"
+            @ref="ElementRef">
+        @ChildContent
+    </button>
+}
+
+@code {
+    private bool _isActive;
+    private bool _shouldPreventDefault;
+    private string _triggerId = $"tabs-trigger-{Guid.NewGuid():N}";
+    private BladixDom? _bladixDom;
+
+    public bool IsDisabled => Disabled;
+
+    [CascadingParameter] public TabsRoot? Root { get; set; }
+    [Parameter] public string? Value { get; set; }
+    [Parameter] public bool Disabled { get; set; }
+
+    protected override void OnInitialized()
+    {
+        _bladixDom = new BladixDom(JSRuntime);
+        Root?.RegisterTrigger(this);
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (!string.IsNullOrEmpty(Value))
+        {
+            _triggerId = $"tabs-trigger-{Value}";
+        }
+
+        _isActive = Root?.IsTabActive(Value) == true;
+    }
+
+    private async Task HandleClick(MouseEventArgs e)
+    {
+        if (!Disabled && Root != null)
+        {
+            await Root.SetActiveTab(Value);
+        }
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (Disabled || Root == null) return;
+
+        bool isVertical = Root.Orientation == Orientation.Vertical;
+        bool isRtl = Root.Dir == Direction.Rtl;
+        bool shouldActivate = Root.ActivationMode == ActivationMode.Automatic;
+        TabsTrigger? targetTrigger = null;
+
+        var navigationKeys = isVertical 
+            ? new[] { "ArrowUp", "ArrowDown", "Home", "End" }
+            : new[] { "ArrowLeft", "ArrowRight", "Home", "End" };
+        
+        _shouldPreventDefault = navigationKeys.Contains(e.Key) || e.Key == " ";
+
+        switch (e.Key)
+        {
+            case "ArrowDown" when isVertical:
+            case "ArrowRight" when !isVertical && !isRtl:
+            case "ArrowLeft" when !isVertical && isRtl:
+                targetTrigger = Root.GetNextTrigger(this);
+                break;
+
+            case "ArrowUp" when isVertical:
+            case "ArrowLeft" when !isVertical && !isRtl:
+            case "ArrowRight" when !isVertical && isRtl:
+                targetTrigger = Root.GetPreviousTrigger(this);
+                break;
+
+            case "Home":
+                targetTrigger = Root.GetFirstTrigger();
+                break;
+
+            case "End":
+                targetTrigger = Root.GetLastTrigger();
+                break;
+
+            case "Enter":
+            case " ": // Space key
+                if (Root.ActivationMode == ActivationMode.Manual && !_isActive)
+                {
+                    await Root.SetActiveTab(Value);
+                }
+                return; 
+        }
+
+        if (targetTrigger != null)
+        {
+            await FocusTrigger(targetTrigger);
+            
+            if (shouldActivate)
+            {
+                await Root.SetActiveTab(targetTrigger.Value);
+            }
+        }
+    }
+
+    private async Task FocusTrigger(TabsTrigger trigger)
+    {
+        if (_bladixDom == null) return;
+
+        try
+        {
+            await _bladixDom.Focus(trigger.ElementRef, preventScroll: false);
+        }
+        catch (JSException)
+        {
+            // Silently handle JS errors
+        }
+        catch (InvalidOperationException)
+        {
+            // Handle cases where JSRuntime is not available
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        Root?.UnregisterTrigger(this);
+        
+        if (_bladixDom != null)
+        {
+            await _bladixDom.DisposeAsync();
+        }
+    }
+}

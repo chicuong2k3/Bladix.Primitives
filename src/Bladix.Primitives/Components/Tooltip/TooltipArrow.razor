@@ -1,0 +1,39 @@
+@inherits BladixComponentBase
+
+@if (AsChild)
+{
+    @ChildContent
+}
+else
+{
+    <svg @attributes="AdditionalAttributes"
+         width="@Width"
+         height="@Height"
+         viewBox="0 0 @Width @Height"
+         data-bladix-tooltip-arrow="true"
+         class="@Class" style="@Style"
+         @ref="ElementRef">
+        <polygon points="@GetPoints()" />
+    </svg>
+}
+
+@code {
+    /// <summary>
+    /// The width of the arrow in pixels.
+    /// Default: 10
+    /// </summary>
+    [Parameter] public int Width { get; set; } = 10;
+
+    /// <summary>
+    /// The height of the arrow in pixels.
+    /// Default: 5
+    /// </summary>
+    [Parameter] public int Height { get; set; } = 5;
+
+    private string GetPoints()
+    {
+        // Creates a triangle pointing upward by default
+        // CSS transforms will rotate it based on tooltip side
+        return $"0,{Height} {Width / 2},0 {Width},{Height}";
+    }
+}

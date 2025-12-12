@@ -1,0 +1,36 @@
+@inherits BladixComponentBase
+
+<CascadingValue Value="this" IsFixed="true">
+    @ChildContent
+</CascadingValue>
+
+@code {
+    private bool _open;
+
+    [Parameter] public bool Open { get; set; }
+    [Parameter] public EventCallback<bool> OpenChanged { get; set; }
+    [Parameter] public bool DefaultOpen { get; set; }
+    [Parameter] public EventCallback OnOpenChange { get; set; }
+
+    protected override void OnInitialized()
+    {
+        _open = Open || DefaultOpen;
+    }
+
+    protected override void OnParametersSet()
+    {
+        _open = Open;
+    }
+
+    public bool IsOpen => _open;
+
+    public async Task SetOpen(bool value)
+    {
+        if (_open == value) return;
+        
+        _open = value;
+        await OpenChanged.InvokeAsync(value);
+        await OnOpenChange.InvokeAsync();
+        StateHasChanged();
+    }
+}
