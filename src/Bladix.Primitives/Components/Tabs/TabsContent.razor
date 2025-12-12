@@ -31,6 +31,8 @@
     private string? _contentId;
     private string? _ariaLabelledBy;
 
+    [CascadingParameter] public TabsRoot? Root { get; set; }
+
     /// <summary>
     /// Optional value used to compose the stable id: "tabs-content-{Value}".
     /// If provided, the element id will be exactly that string so triggers that set
@@ -48,6 +50,7 @@
     /// <summary>
     /// Indicates whether this tab panel is selected/visible.
     /// Consumers (or a Tabs container) should bind this appropriately.
+    /// If TabsRoot is present and Value is provided, Selected will be derived from Root.IsTabActive(Value).
     /// </summary>
     [Parameter] public bool Selected { get; set; }
 
@@ -76,10 +79,15 @@
         // Compose ID to match triggers that rely on "tabs-content-{Value}"
         if (!string.IsNullOrEmpty(Value))
         {
-            // keep value safe for id usage (consumer should provide valid id-able strings)
             _contentId = $"tabs-content-{Value}";
             // default aria-labelledby to the parallel trigger id pattern when not provided
             _ariaLabelledBy = AriaLabelledBy ?? $"tabs-trigger-{Value}";
+
+            // If a TabsRoot is present, derive Selected automatically from Root
+            if (Root != null)
+            {
+                Selected = Root.IsTabActive(Value);
+            }
         }
         else
         {

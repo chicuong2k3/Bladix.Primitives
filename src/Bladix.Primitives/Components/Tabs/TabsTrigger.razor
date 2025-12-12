@@ -49,6 +49,11 @@ else
 
     protected override void OnParametersSet()
     {
+        if (!string.IsNullOrEmpty(Value))
+        {
+            _triggerId = $"tabs-trigger-{Value}";
+        }
+
         _isActive = Root?.IsTabActive(Value) == true;
     }
 

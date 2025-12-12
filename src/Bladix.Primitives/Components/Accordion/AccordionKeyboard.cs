@@ -37,7 +37,7 @@ public sealed class AccordionKeyboard : IAsyncDisposable
         var module = await _moduleTask.Value;
         var orientationStr = orientation == Orientation.Vertical ? "vertical" : "horizontal";
 
-        // Call the JS function and store cleanup function
+        // JS returns an object with a dispose() method
         _cleanupFunction = await module.InvokeAsync<IJSObjectReference>(
             "setupKeyboardNavigation",
             triggerElement,
@@ -50,20 +50,20 @@ public sealed class AccordionKeyboard : IAsyncDisposable
         if (_disposed) return;
         _disposed = true;
 
-        // Call cleanup function if exists
         if (_cleanupFunction != null)
         {
             try
             {
-                await _cleanupFunction.InvokeVoidAsync("apply");
+                // Call the cleanup object's dispose method
+                await _cleanupFunction.InvokeVoidAsync("dispose");
             }
-            catch (JSDisconnectedException) 
-            { 
-                // Circuit disconnected, ignore
+            catch (JSDisconnectedException)
+            {
+                // ignore
             }
             catch (JSException)
             {
-                // Silently handle
+                // silently handle
             }
             finally
             {
@@ -71,7 +71,6 @@ public sealed class AccordionKeyboard : IAsyncDisposable
             }
         }
 
-        // Dispose module
         if (_moduleTask.IsValueCreated)
         {
             var module = await _moduleTask.Value;

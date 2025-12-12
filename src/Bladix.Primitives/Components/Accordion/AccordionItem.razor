@@ -33,32 +33,13 @@ else
 
     [CascadingParameter] public AccordionRoot? Root { get; set; }
 
-    /// <summary>
-    /// Unique identifier for this item. Used by Root to track which items are open.
-    /// </summary>
     [Parameter] public string Value { get; set; } = string.Empty;
-
-    /// <summary>
-    /// When true, prevents this specific item from being interactive.
-    /// </summary>
     [Parameter] public bool Disabled { get; set; }
 
     public bool IsOpen => _isOpen;
-
-    /// <summary>
-    /// Returns the registered header's unique ID or a stable fallback.
-    /// </summary>
-    public string HeaderId => _header?.HeaderId ?? (_fallbackHeaderId + (string.IsNullOrEmpty(Value) ? string.Empty : $"-{Value}"));
-
-    /// <summary>
-    /// Returns the registered content's unique ID or a stable fallback.
-    /// </summary>
-    public string ContentId => _content?.ContentId ?? (_fallbackContentId + (string.IsNullOrEmpty(Value) ? string.Empty : $"-{Value}"));
-
-    /// <summary>
-    /// Returns the registered trigger's unique ID or a stable fallback.
-    /// </summary>
-    public string TriggerId => _trigger?.TriggerId ?? (_fallbackTriggerId + (string.IsNullOrEmpty(Value) ? string.Empty : $"-{Value}"));
+    public string HeaderId => _fallbackHeaderId + (string.IsNullOrEmpty(Value) ? string.Empty : $"-{Value}");
+    public string ContentId => _fallbackContentId + (string.IsNullOrEmpty(Value) ? string.Empty : $"-{Value}");
+    public string TriggerId => _fallbackTriggerId + (string.IsNullOrEmpty(Value) ? string.Empty : $"-{Value}");
 
     public bool HasHeader => _header != null;
     public bool HasContent => _content != null;
@@ -72,67 +53,16 @@ else
         }
     }
 
-    /// <summary>
-    /// Toggle this item via parent root.
-    /// </summary>
     public async Task Toggle()
     {
         if (Disabled || Root?.Disabled == true) return;
-
-        if (Root != null)
-        {
-            await Root.ToggleItem(Value);
-        }
+        if (Root != null) await Root.ToggleItem(Value);
     }
 
-    /// <summary>
-    /// Register an AccordionHeader instance with this item.
-    /// </summary>
-    internal void RegisterHeader(AccordionHeader header)
-    {
-        _header = header;
-    }
-
-    /// <summary>
-    /// Unregister an AccordionHeader instance from this item.
-    /// </summary>
-    internal void UnregisterHeader(AccordionHeader header)
-    {
-        if (_header == header)
-            _header = null;
-    }
-
-    /// <summary>
-    /// Register an AccordionContent instance with this item.
-    /// </summary>
-    internal void RegisterContent(AccordionContent content)
-    {
-        _content = content;
-    }
-
-    /// <summary>
-    /// Unregister an AccordionContent instance from this item.
-    /// </summary>
-    internal void UnregisterContent(AccordionContent content)
-    {
-        if (_content == content)
-            _content = null;
-    }
-
-    /// <summary>
-    /// Register an AccordionTrigger instance with this item.
-    /// </summary>
-    internal void RegisterTrigger(AccordionTrigger trigger)
-    {
-        _trigger = trigger;
-    }
-
-    /// <summary>
-    /// Unregister an AccordionTrigger instance from this item.
-    /// </summary>
-    internal void UnregisterTrigger(AccordionTrigger trigger)
-    {
-        if (_trigger == trigger)
-            _trigger = null;
-    }
+    internal void RegisterHeader(AccordionHeader header) => _header = header;
+    internal void UnregisterHeader(AccordionHeader header) { if (_header == header) _header = null; }
+    internal void RegisterContent(AccordionContent content) => _content = content;
+    internal void UnregisterContent(AccordionContent content) { if (_content == content) _content = null; }
+    internal void RegisterTrigger(AccordionTrigger trigger) => _trigger = trigger;
+    internal void UnregisterTrigger(AccordionTrigger trigger) { if (_trigger == trigger) _trigger = null; }
 }

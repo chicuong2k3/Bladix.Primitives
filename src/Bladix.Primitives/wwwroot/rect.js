@@ -1,76 +1,38 @@
 // Map to store observed elements with their last known rect and .NET reference
 const observedElements = new Map();
-// RequestAnimationFrame ID for cancellation
-let rafId = null;
-// Throttle flag to prevent excessive updates
-let isProcessing = false;
 
-/**
- * Observes changes to an element's bounding rectangle and notifies .NET when changes occur.
- * @param {HTMLElement} element - The DOM element to observe
- * @param {Object} dotNetRef - Reference to .NET object for invoking callbacks
- * @returns {Object} Cleanup object with DisposeAsync method for C# interop
- */
-export function observeElementRect(element, dotNetRef) {
-    if (!element || !dotNetRef) {
-        throw new Error("Element and dotNetRef are required");
-    }
+// Single ResizeObserver used for size changes
+let resizeObserver = null;
 
-    if (!observedElements.has(element)) {
-        // Store the element's current rect and .NET reference
-        observedElements.set(element, {
-            rect: element.getBoundingClientRect(),
-            dotNetRef
-        });
+// Window events that can change element position
+let needsPositionCheck = false;
 
-        // Start the animation frame loop only when the first element is added
-        if (observedElements.size === 1) {
-            rafId = requestAnimationFrame(runLoop);
-        }
-    }
+// Helper: create ResizeObserver lazily
+function ensureResizeObserver() {
+    if (resizeObserver) return;
+    if (typeof ResizeObserver === "undefined") return;
 
-    // Return a cleanup object that matches IJSObjectReference pattern
-    let disposed = false;
-    
-    return {
-        // Blazor calls DisposeAsync() which maps to dispose() in JS
-        dispose: () => {
-            if (disposed) return;
-            disposed = true;
+    resizeObserver = new ResizeObserver(entries => {
+        for (const entry of entries) {
+            const element = entry.target;
+            const data = observedElements.get(element);
+            if (!data) continue;
 
-            observedElements.delete(element);
-
-            // Stop the animation frame loop when no elements are being observed
-            if (observedElements.size === 0 && rafId !== null) {
-                cancelAnimationFrame(rafId);
-                rafId = null;
-                isProcessing = false;
-            }
-        },
-        // Symbol for async disposal (optional but good practice)
-        [Symbol.asyncDispose]: async () => {
-            if (disposed) return;
-            disposed = true;
-
-            observedElements.delete(element);
-
-            if (observedElements.size === 0 && rafId !== null) {
-                cancelAnimationFrame(rafId);
-                rafId = null;
-                isProcessing = false;
+            // Use contentRect for size, but still compute full bounding rect
+            const newRect = element.getBoundingClientRect();
+            if (!rectEquals(data.rect, newRect)) {
+                data.rect = newRect;
+                safeInvokeOnRectChanged(data.dotNetRef, newRect, element);
             }
         }
-    };
+    });
 }
 
-/**
- * Compares two DOMRect objects for equality
- * @param {DOMRect} a - First rectangle
- * @param {DOMRect} b - Second rectangle
- * @returns {boolean} True if rectangles are equal
- */
+// Compare two DOMRect-like objects
 function rectEquals(a, b) {
-    return a.width === b.width &&
+    return a &&
+        b &&
+        a.width === b.width &&
         a.height === b.height &&
         a.top === b.top &&
         a.right === b.right &&
@@ -78,56 +40,106 @@ function rectEquals(a, b) {
         a.left === b.left;
 }
 
-/**
- * Main loop that checks all observed elements for rect changes.
- * Runs continuously via requestAnimationFrame while elements are being observed.
- */
-function runLoop() {
-    // Prevent concurrent execution
-    if (isProcessing) {
-        rafId = requestAnimationFrame(runLoop);
-        return;
-    }
+function safeInvokeOnRectChanged(dotNetRef, rect, element) {
+    if (!dotNetRef) return;
+    dotNetRef.invokeMethodAsync("OnRectChanged", {
+        width: rect.width,
+        height: rect.height,
+        top: rect.top,
+        right: rect.right,
+        bottom: rect.bottom,
+        left: rect.left
+    }).catch(error => {
+        console.error("Error invoking OnRectChanged:", error);
+        // If the dotnet target is gone, remove the element from observation.
+        observedElements.delete(element);
+        try {
+            if (resizeObserver && element) resizeObserver.unobserve(element);
+        } catch { /* swallow */ }
+    });
+}
 
-    isProcessing = true;
+// Position check: on scroll/resize/DOM mutations we re-check positions (cheap)
+function checkPositions() {
+    if (observedElements.size === 0) return;
+    observedElements.forEach((data, element) => {
+        if (!element.isConnected) {
+            observedElements.delete(element);
+            try { if (resizeObserver) resizeObserver.unobserve(element); } catch {}
+            return;
+        }
 
+        const newRect = element.getBoundingClientRect();
+        if (!rectEquals(data.rect, newRect)) {
+            data.rect = newRect;
+            safeInvokeOnRectChanged(data.dotNetRef, newRect, element);
+        }
+    });
+    needsPositionCheck = false;
+}
+
+// Listen to global events that may change layout/position
+if (typeof window !== "undefined") {
+    window.addEventListener("scroll", () => { if (!needsPositionCheck) { needsPositionCheck = true; requestAnimationFrame(checkPositions); } }, { passive: true });
+    window.addEventListener("resize", () => { if (!needsPositionCheck) { needsPositionCheck = true; requestAnimationFrame(checkPositions); } }, { passive: true });
+
+    // MutationObserver to catch DOM changes that could shift elements (attributes, subtree)
     try {
-        observedElements.forEach((data, element) => {
-            // Check if element is still in the DOM
-            if (!element.isConnected) {
-                observedElements.delete(element);
-                return;
-            }
+        const mo = new MutationObserver(() => { if (!needsPositionCheck) { needsPositionCheck = true; requestAnimationFrame(checkPositions); } });
+        mo.observe(document, { attributes: true, childList: true, subtree: true });
+    } catch (e) {
+        // If MutationObserver isn't available, we still have scroll/resize as fallbacks
+        console.warn("MutationObserver not available:", e);
+    }
+}
 
-            const newRect = element.getBoundingClientRect();
+/**
+ * Observes changes to an element's bounding rectangle and notifies .NET when changes occur.
+ * Uses ResizeObserver for size changes and window events for position changes.
+ * @param {HTMLElement} element - The DOM element to observe
+ * @param {Object} dotNetRef - Reference to .NET object for invoking callbacks
+ * @returns {Object} Cleanup object with dispose() and async dispose support
+ */
+export function observeElementRect(element, dotNetRef) {
+    if (!element || !dotNetRef) {
+        throw new Error("Element and dotNetRef are required");
+    }
 
-            if (!rectEquals(data.rect, newRect)) {
-                data.rect = newRect;
+    // Initialize ResizeObserver if supported
+    ensureResizeObserver();
 
-                // Use invokeMethodAsync with error handling
-                data.dotNetRef.invokeMethodAsync("OnRectChanged", {
-                    width: newRect.width,
-                    height: newRect.height,
-                    top: newRect.top,
-                    right: newRect.right,
-                    bottom: newRect.bottom,
-                    left: newRect.left
-                }).catch(error => {
-                    console.error("Error invoking OnRectChanged:", error);
-                    // Remove the element if the callback fails
-                    observedElements.delete(element);
-                });
-            }
+    if (!observedElements.has(element)) {
+        const initialRect = element.getBoundingClientRect();
+        observedElements.set(element, {
+            rect: initialRect,
+            dotNetRef
         });
-    } finally {
-        isProcessing = false;
+
+        // Start observing size if ResizeObserver exists
+        try {
+            if (resizeObserver) resizeObserver.observe(element);
+        } catch (e) {
+            console.warn("ResizeObserver.observe failed:", e);
+        }
+
+        // Notify initial rect to .NET
+        safeInvokeOnRectChanged(dotNetRef, initialRect, element);
     }
 
-    // Schedule the next frame if there are still elements to observe
-    if (observedElements.size > 0) {
-        rafId = requestAnimationFrame(runLoop);
-    } else {
-        // Cleanup when no elements remain
-        rafId = null;
-    }
+    let disposed = false;
+
+    return {
+        dispose: () => {
+            if (disposed) return;
+            disposed = true;
+            observedElements.delete(element);
+            try { if (resizeObserver) resizeObserver.unobserve(element); } catch {}
+        },
+        [Symbol.asyncDispose]: async () => {
+            if (disposed) return;
+            disposed = true;
+            observedElements.delete(element);
+            try { if (resizeObserver) resizeObserver.unobserve(element); } catch {}
+        }
+    };
 }

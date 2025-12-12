@@ -10,7 +10,43 @@ All components must match Radix UI's behavior, API, and accessibility patterns 1
 - **Documentation**: https://www.radix-ui.com/primitives/docs/overview/introduction
 - **Accessibility**: Follow WAI-ARIA Design Patterns exactly as Radix UI does
 
+## Implementation Audit (Mandatory)
+Always perform a formal 100% compliance audit for any component implemented or modified. The audit must be documented in the PR and signed off by a reviewer.
+
+Audit steps (minimum):
+- Compare API surface: ensure props/parameters, names and signatures match Radix (props → parameters).
+- Verify event naming and payloads (e.g., `onValueChange` → `OnValueChange`) and that EventCallback payload types match.
+- Behavioral parity: controlled vs uncontrolled behavior, default values, open/close semantics, focus management, portal behavior, ForceMount, AsChild.
+- Accessibility parity: roles, aria-* attributes, keyboard interactions, and focus trapping exactly as Radix does.
+- Interaction tests: run bUnit tests for behavior and manual/automated keyboard tests where necessary.
+- Visual / example parity: ensure example docs demonstrate identical usage patterns and observable behavior.
+- Document references: include Radix source links or specific lines/sections used for verification.
+- PR requirement: attach audit checklist and test results; reviewer must confirm "100% Radix compliance" before merging.
+
+## Reference Sources
+- **Primary Reference**: https://github.com/radix-ui/primitives
+- **React Source**: Always check the React implementation before porting
+- **Documentation**: https://www.radix-ui.com/primitives/docs/overview/introduction
+- **Accessibility**: Follow WAI-ARIA Design Patterns exactly as Radix UI does
+
 ## Naming Conventions
+
+### Project convention
+
+Follow Radix UI naming for change callbacks.
+
+- Use `OnValueChange` instead of `ValueChanged` for component value change EventCallbacks.
+  - Example component parameter:
+    - ` [Parameter] public EventCallback<T?> OnValueChange { get; set; } `
+  - Example usage in Razor markup:
+    - `<MyComponent Value="value" OnValueChange="HandleChange" />`
+  - Example invocation inside component:
+    - `await OnValueChange.InvokeAsync(newValue);`
+
+Rationale: aligns naming with Radix UI conventions and improves consistency across components.
+
+Note: rename any local variables or helpers that contained `ValueChanged` (e.g., `SingleValueChangedCallback`) to use `OnValueChange` in their identifier to keep code consistent.
+
 
 ### Component Names
 - Use PascalCase for all component names and filenames
@@ -45,8 +81,6 @@ src/Bladix.Primitives/Components/
 ### Code Conventions
 - **NO separate .razor.cs files** - use `@code` blocks inside `.razor` files
 - **Private fields**: prefix with `_`
-- **EventCallback properties**: suffix `Changed`
-- **Max line length**: 120 characters
 - **Indentation**: 4 spaces
 
 ## Component Structure Template
@@ -71,7 +105,7 @@ src/Bladix.Primitives/Components/
     [CascadingParameter] public [ParentComponent]? [Parent] { get; set; }
 
     [Parameter] public bool Open { get; set; }
-    [Parameter] public EventCallback<bool> OpenChanged { get; set; }
+    [Parameter] public EventCallback<bool> OnOpenChange { get; set; }
     [Parameter] public bool DefaultOpen { get; set; }
 
     private bool _isOpen;
@@ -89,7 +123,7 @@ src/Bladix.Primitives/Components/
     private bool _open;
 
     [Parameter] public bool Open { get; set; }
-    [Parameter] public EventCallback<bool> OpenChanged { get; set; }
+    [Parameter] public EventCallback<bool> OnOpenChange { get; set; }
     [Parameter] public bool DefaultOpen { get; set; }
 
     protected override void OnInitialized()
@@ -126,11 +160,11 @@ Match Radix UI props EXACTLY:
 // Radix UI React
 // <Dialog.Root open={isOpen} onOpenChange={setIsOpen}>
 // Bladix Blazor
-// <DialogRoot Open="_isOpen" OpenChanged="SetIsOpen">
+// <DialogRoot Open="_isOpen" OnOpenChange="SetIsOpen">
 
 ### 2. Event Handlers
 // Radix UI: onOpenChange, onValueChange, onSelect
-// Bladix: OpenChanged, ValueChanged, OnSelect
+// Bladix: OnOpenChange, OnValueChange, OnSelect
 
 ### 3. Boolean Props
 // Radix UI: disabled, forceMount, defaultOpen
@@ -222,3 +256,4 @@ GitHub repos and ARIA guidelines.
 - AsChild
 - Tests
 - Docs
+- Implementation audit completed and documented in PR (must be signed off by reviewer)

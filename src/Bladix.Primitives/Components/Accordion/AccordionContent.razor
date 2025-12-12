@@ -9,22 +9,15 @@
     }
     else
     {
-        @*
-           Renders content panel with:
-           - id: unique identifier for aria-controls linking
-           - role="region": semantic landmark for assistive tech
-           - aria-labelledby: references the trigger (preferred) or header for accessible name
-           - hidden: controls visibility (for CSS animations when ForceMount=true)
-           - data-state: for CSS-based animations and styling
-        *@
         <div @attributes="AdditionalAttributes"
-             id="@_contentId"
+             id="@Item?.ContentId"
              role="region"
              aria-labelledby="@(Item?.HasTrigger == true ? Item?.TriggerId : Item?.HeaderId)"
+             aria-hidden="@(Item?.IsOpen != true ? "true" : null)"
              data-state="@(Item?.IsOpen == true ? "open" : "closed")"
              data-disabled="@((Item?.Disabled == true || Root?.Disabled == true) ? "true" : null)"
              data-orientation="@Root?.Orientation.ToString().ToLowerInvariant()"
-             hidden="@(Item?.IsOpen != true)"
+             hidden="@(Item?.IsOpen != true ? true : (bool?)null)"
              class="@Class" 
              style="@Style"
              @ref="ElementRef">
@@ -34,8 +27,6 @@
 }
 
 @code {
-    private readonly string _contentId = $"bladix-accordion-content-{Guid.NewGuid():N}";
-
     /// <summary>
     /// Gets the parent AccordionRoot component cascaded from the component tree.
     /// </summary>
@@ -55,12 +46,6 @@
     /// </summary>
     [Parameter] 
     public bool ForceMount { get; set; }
-
-    /// <summary>
-    /// Gets the unique identifier for this content element.
-    /// Used by AccordionTrigger's aria-controls attribute for accessibility.
-    /// </summary>
-    public string ContentId => _contentId;
 
     /// <summary>
     /// Registers this content with the parent item on initialization.
