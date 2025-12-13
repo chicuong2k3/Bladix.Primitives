@@ -1,66 +1,219 @@
+@using Bladix.Primitives.Core.Rect
 @inherits BladixComponentBase
 @implements IDisposable
+@implements IAsyncDisposable
+@inject IJSRuntime JSRuntime
 
-@if (Item?.IsOpen == true || ForceMount)
+@if (!UnmountOnClose || ForceMount || Item?.IsOpen == true)
 {
     @if (AsChild)
     {
-        @ChildContent
+        <CascadingValue Value="this" IsFixed="true">
+            @if (ChildContentWithAttributes != null)
+            {
+                @ChildContentWithAttributes(AdditionalAttributes ?? new Dictionary<string, object>())
+            }
+            else
+            {
+                @ChildContent
+            }
+        </CascadingValue>
     }
     else
     {
         <div @attributes="AdditionalAttributes"
              id="@Item?.ContentId"
              role="region"
-             aria-labelledby="@(Item?.HasTrigger == true ? Item?.TriggerId : Item?.HeaderId)"
-             aria-hidden="@(Item?.IsOpen != true ? "true" : null)"
+             aria-labelledby="@(Item?.TriggerId)"
+             aria-hidden="@(Item?.IsOpen == true ? "false" : "true")"
+             hidden="@(Item?.IsOpen == true ? (bool?)null : true)"
              data-state="@(Item?.IsOpen == true ? "open" : "closed")"
-             data-disabled="@((Item?.Disabled == true || Root?.Disabled == true) ? "true" : null)"
-             data-orientation="@Root?.Orientation.ToString().ToLowerInvariant()"
-             hidden="@(Item?.IsOpen != true ? true : (bool?)null)"
-             class="@Class" 
+             data-disabled="@(Item?.Disabled == true ? "true" : null)"
+             data-orientation="@(Item?.Root?.Orientation.ToString().ToLowerInvariant())"
+             class="@Class"
              style="@Style"
              @ref="ElementRef">
-            @ChildContent
+            <CascadingValue Value="this" IsFixed="true">
+                @ChildContent
+            </CascadingValue>
         </div>
     }
 }
-
 @code {
-    /// <summary>
-    /// Gets the parent AccordionRoot component cascaded from the component tree.
-    /// </summary>
-    [CascadingParameter] 
-    public AccordionRoot? Root { get; set; }
+    [Parameter] public bool ForceMount { get; set; } = false;
 
-    /// <summary>
-    /// Gets the parent AccordionItem component cascaded from the component tree.
-    /// </summary>
-    [CascadingParameter] 
-    public AccordionItem? Item { get; set; }
+    // Keep DOM mounted when false => prevents remount jank for tab-like usage.
+    [Parameter] public bool UnmountOnClose { get; set; } = true;
 
-    /// <summary>
-    /// Gets or sets a value indicating whether to force-mount the content in the DOM.
-    /// When true, the content is always present in DOM even when closed.
-    /// Useful for controlling animations with CSS.
-    /// </summary>
-    [Parameter] 
-    public bool ForceMount { get; set; }
+    [CascadingParameter] public AccordionItem? Item { get; set; }
 
-    /// <summary>
-    /// Registers this content with the parent item on initialization.
-    /// </summary>
+    private bool _registered;
+    private AccordionContentJs? _contentJs;
+    private BladixRect? _rect;
+    private bool _observingRect;
+
+    // Track previous open state so JS runs only when state changes
+    private bool? _prevIsOpen;
+    // When true, OnAfterRenderAsync should invoke the appropriate JS animation once
+    private bool _pendingJsUpdate;
+
     protected override void OnInitialized()
     {
-        Item?.RegisterContent(this);
+        _contentJs = new AccordionContentJs(JSRuntime);
+        _rect = new BladixRect(JSRuntime);
+        _rect.OnChanged += HandleRectChanged;
     }
 
-    /// <summary>
-    /// Unregisters this content from the parent item when disposed.
-    /// Implements IDisposable pattern for cleanup.
-    /// </summary>
+    protected override void OnParametersSet()
+    {
+        // compute whether open state changed
+        var isOpen = Item?.IsOpen == true;
+        if (_prevIsOpen == null)
+        {
+            // first time initialize
+            _prevIsOpen = isOpen;
+            // do not set pending on initial parameter set to avoid double animations during init
+            _pendingJsUpdate = false;
+        }
+        else if (_prevIsOpen != isOpen)
+        {
+            _prevIsOpen = isOpen;
+            _pendingJsUpdate = true;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // Register content after it has rendered so registration order matches Header/Trigger registration
+        if (!_registered && Item != null)
+        {
+            Item.RegisterContent(this);
+            _registered = true;
+        }
+
+        // Start or stop observing element rect only when the element is mounted and we actually care
+        if (!_observingRect && _rect != null && ElementRef.Context != null)
+        {
+            // observe if we keep mounted (UnmountOnClose == false) or it's currently open
+            var shouldObserve = !UnmountOnClose || (Item?.IsOpen == true);
+            if (shouldObserve)
+            {
+                try
+                {
+                    await _rect.ObserveAsync(ElementRef);
+                    _observingRect = true;
+                }
+                catch { /* best-effort; ignore */ }
+            }
+        }
+
+        // If we no longer should observe (e.g., we unmounted or closed and UnmountOnClose==true), dispose
+        if (_observingRect && _rect != null)
+        {
+            var shouldStillObserve = !UnmountOnClose || (Item?.IsOpen == true);
+            if (!shouldStillObserve)
+            {
+                try
+                {
+                    _ = _rect.DisposeAsync();
+                }
+                catch { /* swallow */ }
+                _rect.OnChanged -= HandleRectChanged;
+                _rect = null;
+                _observingRect = false;
+            }
+        }
+
+        // Only call JS animation when the open state actually changed
+        if (_pendingJsUpdate && _contentJs != null && Item != null)
+        {
+            try
+            {
+                if (Item.IsOpen)
+                    await _contentJs.SetOpenAsync(ElementRef);
+                else
+                    await _contentJs.SetClosedAsync(ElementRef);
+            }
+            catch (JSException) { /* ignore if JS unavailable */ }
+            catch (InvalidOperationException) { /* prerender */ }
+            finally
+            {
+                _pendingJsUpdate = false;
+            }
+        }
+    }
+
+    private void HandleRectChanged(DOMRect rect)
+    {
+        // Avoid awaiting in event thread — fire-and-forget the JS update.
+        if (_contentJs == null) return;
+
+        try
+        {
+            var height = rect.Height;
+            // Update measured height in JS — JS will only apply when appropriate.
+            _ = _contentJs.UpdateMeasuredHeightAsync(ElementRef, height);
+        }
+        catch
+        {
+            // swallow: best-effort sync
+        }
+    }
+
     public void Dispose()
     {
-        Item?.UnregisterContent(this);
+        if (_registered)
+        {
+            Item?.UnregisterContent(this);
+            _registered = false;
+        }
+
+        if (_rect != null)
+        {
+            _rect.OnChanged -= HandleRectChanged;
+            _ = _rect.DisposeAsync();
+            _rect = null;
+            _observingRect = false;
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        // Ensure synchronous registration/unregistration handled in async path too
+        if (_registered)
+        {
+            try { Item?.UnregisterContent(this); } catch { /* swallow */ }
+            _registered = false;
+        }
+
+        if (_rect != null)
+        {
+            try
+            {
+                _rect.OnChanged -= HandleRectChanged;
+            }
+            catch { /* swallow */ }
+
+            try
+            {
+                await _rect.DisposeAsync();
+            }
+            catch { /* swallow */ }
+
+            _rect = null;
+            _observingRect = false;
+        }
+
+        if (_contentJs != null)
+        {
+            try
+            {
+                await _contentJs.DisposeAsync();
+            }
+            catch { /* swallow */ }
+            _contentJs = null;
+        }
+
+        GC.SuppressFinalize(this);
     }
 }

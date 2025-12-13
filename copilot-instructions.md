@@ -257,3 +257,24 @@ GitHub repos and ARIA guidelines.
 - Tests
 - Docs
 - Implementation audit completed and documented in PR (must be signed off by reviewer)
+
+# Accordion PR Audit Checklist
+
+- [ ] API surface: confirm parameters & names match Radix semantics (Root props, Item Value, Trigger, Content)
+- [ ] Generic API: verify `AccordionRoot<TValue>` and `AccordionItem<TValue>` signatures and usage examples
+- [ ] Controlled/uncontrolled: unit tests for Value vs DefaultValue behavior for Single and Multiple modes
+- [ ] Event callbacks: OnValueChange payload types validated for Single (TValue?) and Multiple (TValue[]/IEnumerable<TValue>)
+- [ ] Accessibility: aria-expanded, aria-controls, aria-labelledby, role="region", hidden/aria-hidden behavior verified
+- [ ] Keyboard navigation: Arrow/Home/End behavior in vertical/horizontal + RTL tested (manual + automation)
+- [ ] Roving tabindex: initial tabbable selection and SetTabbableTrigger behavior validated
+- [ ] Disabled semantics: Item and Root Disabled combinations tested
+- [ ] ForceMount / UnmountOnClose / AsChild: behaviors verified and examples updated
+- [ ] Animations: measured-height JS animation + ResizeObserver integration validated; ensure content measurement doesn't break hidden semantics
+- [ ] SSR/Prerender: JS interop fallbacks validated (no thrown exceptions during prerender)
+- [ ] Tests: bUnit tests added for keyboard navigation, controlled/uncontrolled, UnmountOnClose behavior and animation calls
+- [ ] Docs: update examples to show typed usage `<AccordionRoot TValue="string" ...>` and migration notes
+- [ ] PR description: list of files changed, breaking changes, migration guidance, and Radix references used
+- [ ] Reviewer sign-off: a reviewer has confirmed "100% Radix compliance" per checklist
+
+Notes:
+- For a breaking typed migration, include migration guidance in the PR (how to replace non-generic `<AccordionRoot ...>` with `<AccordionRoot TValue="T">` and update child components).

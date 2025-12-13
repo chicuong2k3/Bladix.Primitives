@@ -1,0 +1,30 @@
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Web
+
+<button @ref="_el" @attributes="Attributes">
+    @ChildContent
+</button>
+
+@code {
+    // Attributes forwarded from AccordionTrigger.BuildSplatAttributes()
+    [Parameter] public IDictionary<string, object>? Attributes { get; set; }
+
+    // Content placed inside the button
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    // When used as AsChild inside AccordionTrigger, the trigger cascades itself
+    [CascadingParameter] public AccordionTrigger? ParentTrigger { get; set; }
+
+    private ElementReference _el;
+    private bool _elementRefSent;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!_elementRefSent && ParentTrigger != null)
+        {
+            // Pass the real ElementReference back to the AccordionTrigger so JS can attach keyboard handlers.
+            ParentTrigger.SetElementRef(_el);
+            _elementRefSent = true;
+        }
+    }
+}
