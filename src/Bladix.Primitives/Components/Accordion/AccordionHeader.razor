@@ -7,22 +7,122 @@
 }
 else
 {
-    <h3 @attributes="AdditionalAttributes"
-        id="@Item?.HeaderId"
-        data-state="@(Item?.IsOpen == true ? "open" : "closed")"
-        data-disabled="@((Item?.Disabled == true || Root?.Disabled == true) ? "true" : null)"
-        data-orientation="@Root?.Orientation.ToString().ToLowerInvariant()"
-        class="@Class" 
-        style="@Style"
-        @ref="ElementRef">
-        @ChildContent
-    </h3>
+    @if (HeadingLevel is >= 1 and <= 6)
+    {
+        @switch (HeadingLevel)
+        {
+            case 1:
+                <h1 @attributes="AdditionalAttributes"
+                    id="@Item?.HeaderId"
+                    data-state="@(Item?.IsOpen == true ? "open" : "closed")"
+                    data-disabled="@((Item?.Disabled == true || Root?.Disabled == true) ? "true" : null)"
+                    data-orientation="@Root?.Orientation.ToString().ToLowerInvariant()"
+                    class="@Class"
+                    style="@Style"
+                    @ref="ElementRef">
+                    @ChildContent
+                </h1>
+                break;
+            case 2:
+                <h2 @attributes="AdditionalAttributes"
+                    id="@Item?.HeaderId"
+                    data-state="@(Item?.IsOpen == true ? "open" : "closed")"
+                    data-disabled="@((Item?.Disabled == true || Root?.Disabled == true) ? "true" : null)"
+                    data-orientation="@Root?.Orientation.ToString().ToLowerInvariant()"
+                    class="@Class"
+                    style="@Style"
+                    @ref="ElementRef">
+                    @ChildContent
+                </h2>
+                break;
+            case 3:
+                <h3 @attributes="AdditionalAttributes"
+                    id="@Item?.HeaderId"
+                    data-state="@(Item?.IsOpen == true ? "open" : "closed")"
+                    data-disabled="@((Item?.Disabled == true || Root?.Disabled == true) ? "true" : null)"
+                    data-orientation="@Root?.Orientation.ToString().ToLowerInvariant()"
+                    class="@Class"
+                    style="@Style"
+                    @ref="ElementRef">
+                    @ChildContent
+                </h3>
+                break;
+            case 4:
+                <h4 @attributes="AdditionalAttributes"
+                    id="@Item?.HeaderId"
+                    data-state="@(Item?.IsOpen == true ? "open" : "closed")"
+                    data-disabled="@((Item?.Disabled == true || Root?.Disabled == true) ? "true" : null)"
+                    data-orientation="@Root?.Orientation.ToString().ToLowerInvariant()"
+                    class="@Class"
+                    style="@Style"
+                    @ref="ElementRef">
+                    @ChildContent
+                </h4>
+                break;
+            case 5:
+                <h5 @attributes="AdditionalAttributes"
+                    id="@Item?.HeaderId"
+                    data-state="@(Item?.IsOpen == true ? "open" : "closed")"
+                    data-disabled="@((Item?.Disabled == true || Root?.Disabled == true) ? "true" : null)"
+                    data-orientation="@Root?.Orientation.ToString().ToLowerInvariant()"
+                    class="@Class"
+                    style="@Style"
+                    @ref="ElementRef">
+                    @ChildContent
+                </h5>
+                break;
+            case 6:
+                <h6 @attributes="AdditionalAttributes"
+                    id="@Item?.HeaderId"
+                    data-state="@(Item?.IsOpen == true ? "open" : "closed")"
+                    data-disabled="@((Item?.Disabled == true || Root?.Disabled == true) ? "true" : null)"
+                    data-orientation="@Root?.Orientation.ToString().ToLowerInvariant()"
+                    class="@Class"
+                    style="@Style"
+                    @ref="ElementRef">
+                    @ChildContent
+                </h6>
+                break;
+        }
+    }
+    else
+    {
+        <div @attributes="AdditionalAttributes"
+             role="heading"
+             aria-level="@(HeadingLevelText)"
+             id="@Item?.HeaderId"
+             data-state="@(Item?.IsOpen == true ? "open" : "closed")"
+             data-disabled="@((Item?.Disabled == true || Root?.Disabled == true) ? "true" : null)"
+             data-orientation="@Root?.Orientation.ToString().ToLowerInvariant()"
+             class="@Class"
+             style="@Style"
+             @ref="ElementRef">
+            @ChildContent
+        </div>
+    }
 }
 
 @code {
     [CascadingParameter] public AccordionRoot? Root { get; set; }
     [CascadingParameter] public AccordionItem? Item { get; set; }
 
-    protected override void OnInitialized() => Item?.RegisterHeader(this);
+    [Parameter] public int? HeadingLevel { get; set; } = 3;
+
+    private string HeadingLevelText => (HeadingLevel.HasValue && HeadingLevel.Value >= 1 && HeadingLevel.Value <= 6)
+        ? HeadingLevel.Value.ToString()
+        : "3";
+
+    private bool _registered;
+
+    protected override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!_registered)
+        {
+            Item?.RegisterHeader(this);
+            _registered = true;
+        }
+        return Task.CompletedTask;
+    }
+
     public void Dispose() => Item?.UnregisterHeader(this);
 }

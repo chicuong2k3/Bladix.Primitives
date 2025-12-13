@@ -1,9 +1,17 @@
 @inherits BladixComponentBase
+@using System.Text.RegularExpressions
 
 @if (AsChild)
 {
     <CascadingValue Value="this" IsFixed="true">
-        @ChildContent
+        @if (ChildContentWithAttributes != null)
+        {
+            @ChildContentWithAttributes(AdditionalAttributes ?? new Dictionary<string, object>())
+        }
+        else
+        {
+            @ChildContent
+        }
     </CascadingValue>
 }
 else
@@ -37,9 +45,31 @@ else
     [Parameter] public bool Disabled { get; set; }
 
     public bool IsOpen => _isOpen;
-    public string HeaderId => _fallbackHeaderId + (string.IsNullOrEmpty(Value) ? string.Empty : $"-{Value}");
-    public string ContentId => _fallbackContentId + (string.IsNullOrEmpty(Value) ? string.Empty : $"-{Value}");
-    public string TriggerId => _fallbackTriggerId + (string.IsNullOrEmpty(Value) ? string.Empty : $"-{Value}");
+
+    private static readonly Regex _idSanitizeRegex = new(@"[^A-Za-z0-9_\-:.]", RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
+    private static string SanitizeIdSuffix(string? value)
+    {
+        if (string.IsNullOrEmpty(value)) return string.Empty;
+
+        var sanitized = _idSanitizeRegex.Replace(value!, "-");
+
+        sanitized = sanitized.Trim('-');
+
+        if (string.IsNullOrEmpty(sanitized))
+        {
+            return "value";
+        }
+
+        if (char.IsDigit(sanitized[0]))
+            sanitized = "id-" + sanitized;
+
+        return sanitized;
+    }
+
+    public string HeaderId => _fallbackHeaderId + (string.IsNullOrEmpty(Value) ? string.Empty : $"-{SanitizeIdSuffix(Value)}");
+    public string ContentId => _fallbackContentId + (string.IsNullOrEmpty(Value) ? string.Empty : $"-{SanitizeIdSuffix(Value)}");
+    public string TriggerId => _fallbackTriggerId + (string.IsNullOrEmpty(Value) ? string.Empty : $"-{SanitizeIdSuffix(Value)}");
 
     public bool HasHeader => _header != null;
     public bool HasContent => _content != null;

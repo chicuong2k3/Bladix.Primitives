@@ -4,7 +4,16 @@
 
 @if (AsChild)
 {
-    @ChildContent
+    <CascadingValue Value="this" IsFixed="true">
+        @if (ChildContentWithAttributes != null)
+        {
+            @ChildContentWithAttributes(BuildSplatAttributes())
+        }
+        else
+        {
+            @ChildContent
+        }
+    </CascadingValue>
 }
 else
 {
@@ -15,7 +24,7 @@ else
             @onfocus="HandleFocus"
             @onkeydown="HandleKeyDown"
             aria-expanded="@(Item?.IsOpen == true ? "true" : "false")"
-            aria-controls="@(Item?.ContentId)"
+            aria-controls="@(Item?.HasContent == true ? Item?.ContentId : null)"
             aria-disabled="@(_isDisabled ? "true" : null)"
             tabindex="@(Root?.GetTabIndex(this) ?? 0)"
             data-state="@(Item?.IsOpen == true ? "open" : "closed")"
@@ -37,6 +46,12 @@ else
     private bool _keyboardSetupRequested;
     private bool _keyboardSetupInitialized;
 
+    // registration guards to avoid redundant register/unregister calls and extra renders
+    private bool _registeredWithItem;
+    private bool _registeredWithRoot;
+    private AccordionItem? _prevItem;
+    private AccordionRoot? _prevRoot;
+
     public bool IsDisabled => _isDisabled;
 
     [CascadingParameter] public AccordionRoot? Root { get; set; }
@@ -49,36 +64,32 @@ else
         // registration moved to OnAfterRenderAsync to preserve DOM order
     }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender || _keyboardSetupRequested)
-        {
-            // register with item and root after render to preserve DOM order for keyboard navigation
-            Item?.RegisterTrigger(this);
-            Root?.RegisterTrigger(this);
-
-            // ensure keyboard setup if this trigger is enabled
-            if (!_isDisabled && Root != null && _accordionKeyboard != null && !_keyboardSetupInitialized)
-            {
-                try
-                {
-                    await _accordionKeyboard!.SetupKeyboardNavigation(
-                        ElementRef,
-                        Root.Orientation
-                    );
-                    _keyboardSetupInitialized = true;
-                    _keyboardSetupRequested = false;
-                }
-                catch (JSException) { /* Silently handle */ }
-                catch (InvalidOperationException) { /* Handle JSRuntime unavailable */ }
-            }
-        }
-    }
-
     protected override void OnParametersSet()
     {
         var prevDisabled = _isDisabled;
         _isDisabled = (Item?.Disabled == true || Root?.Disabled == true);
+
+        // If cascading Item changed, unregister from previous to avoid duplicates
+        if (!ReferenceEquals(Item, _prevItem))
+        {
+            if (_prevItem != null && _registeredWithItem)
+            {
+                try { _prevItem.UnregisterTrigger(this); } catch { /* swallow */ }
+                _registeredWithItem = false;
+            }
+            _prevItem = Item;
+        }
+
+        // If cascading Root changed, unregister from previous to avoid duplicates
+        if (!ReferenceEquals(Root, _prevRoot))
+        {
+            if (_prevRoot != null && _registeredWithRoot)
+            {
+                try { _prevRoot.UnregisterTrigger(this); } catch { /* swallow */ }
+                _registeredWithRoot = false;
+            }
+            _prevRoot = Root;
+        }
 
         // If this trigger became disabled and was the tabbable trigger, move tabbable to first non-disabled
         if (_isDisabled && Root != null && Root.GetTabIndex(this) == 0)
@@ -97,6 +108,61 @@ else
             // request keyboard setup for next render (we avoid calling JSRuntime synchronously here)
             _keyboardSetupRequested = true;
             _keyboardSetupInitialized = false;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender || _keyboardSetupRequested)
+        {
+            // register with item and root after render to preserve DOM order for keyboard navigation
+            if (!_registeredWithItem && Item != null)
+            {
+                try
+                {
+                    Item.RegisterTrigger(this);
+                    _registeredWithItem = true;
+                }
+                catch { /* swallow */ }
+            }
+
+            if (!_registeredWithRoot && Root != null)
+            {
+                try
+                {
+                    Root.RegisterTrigger(this);
+                    _registeredWithRoot = true;
+                }
+                catch { /* swallow */ }
+            }
+
+            // ensure keyboard setup if this trigger is enabled
+            if (!_isDisabled && Root != null && _accordionKeyboard != null && !_keyboardSetupInitialized)
+            {
+                try
+                {
+                    // ElementRef may already be set (button case) or provided via SetElementRef when AsChild
+                    await _accordionKeyboard!.SetupKeyboardNavigation(
+                        ElementRef,
+                        Root.Orientation
+                    );
+                    _keyboardSetupInitialized = true;
+                    _keyboardSetupRequested = false;
+                }
+                catch (JSException) { /* Silently handle */ }
+                catch (InvalidOperationException) { /* Handle JSRuntime unavailable */ }
+            }
+        }
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        // fallback: ensure _prevItem/_prevRoot are synced after first render in case
+        // OnParametersSet didn't run before initial render.
+        if (firstRender)
+        {
+            _prevItem = Item;
+            _prevRoot = Root;
         }
     }
 
@@ -123,7 +189,8 @@ else
     /// Handles keyboard navigation for accordion triggers.
     /// Vertical: ArrowUp/ArrowDown/Home/End
     /// Horizontal: ArrowLeft/ArrowRight/Home/End (with RTL support)
-    /// preventDefault is handled by AccordionKeyboard via JS module
+    /// Note: preventing default for navigation keys is handled by the JS module (AccordionKeyboard).
+    /// The Blazor-side fallback focuses the appropriate trigger but cannot reliably call preventDefault per-event.
     /// </summary>
     private async Task HandleKeyDown(KeyboardEventArgs e)
     {
@@ -226,10 +293,98 @@ else
 
     public async ValueTask DisposeAsync()
     {
-        // unregister from item and root
-        Item?.UnregisterTrigger(this);
-        Root?.UnregisterTrigger(this);
+        // unregister from item and root only if we registered earlier
+        try
+        {
+            if (_registeredWithItem && Item != null)
+            {
+                try { Item.UnregisterTrigger(this); } catch { /* swallow */ }
+                _registeredWithItem = false;
+            }
+
+            if (_registeredWithRoot && Root != null)
+            {
+                try { Root.UnregisterTrigger(this); } catch { /* swallow */ }
+                _registeredWithRoot = false;
+            }
+        }
+        catch { /* swallow */ }
+
         if (_accordionKeyboard != null) await _accordionKeyboard.DisposeAsync();
         if (_bladixDom != null) await _bladixDom.DisposeAsync();
+    }
+
+    // --- New / changed helpers for AsChild support ---
+
+    // Public API: child element (user markup) can retrieve the trigger via CascadingParameter
+    // and then call this to register its ElementReference so keyboard JS can attach.
+    public void SetElementRef(ElementReference elementRef)
+    {
+        ElementRef = elementRef;
+        // Fire-and-forget ensure keyboard attach if requested
+        _ = EnsureKeyboardSetupAfterRefAsync();
+    }
+
+    private async Task EnsureKeyboardSetupAfterRefAsync()
+    {
+        if (_isDisabled || Root == null || _accordionKeyboard == null) return;
+        if (_keyboardSetupInitialized) return;
+
+        try
+        {
+            await _accordionKeyboard.SetupKeyboardNavigation(ElementRef, Root.Orientation);
+            _keyboardSetupInitialized = true;
+            _keyboardSetupRequested = false;
+        }
+        catch (JSException) { /* swallow */ }
+        catch (InvalidOperationException) { /* swallow */ }
+    }
+
+    // Build the attribute dictionary to forward to child when AsChild == true.
+    // This merges AdditionalAttributes and injects ARIA + data attributes + event callbacks.
+    private Dictionary<string, object> BuildSplatAttributes()
+    {
+        var attrs = new Dictionary<string, object>(AdditionalAttributes ?? new Dictionary<string, object>());
+
+        // Merge class attribute: preserve both component Class and user-provided class
+        if (attrs.TryGetValue("class", out var userClassObj) && userClassObj is string userClass && !string.IsNullOrEmpty(userClass))
+        {
+            attrs["class"] = string.IsNullOrEmpty(Class) ? userClass : $"{Class} {userClass}";
+        }
+        else if (!string.IsNullOrEmpty(Class))
+        {
+            attrs["class"] = Class;
+        }
+
+        if (!string.IsNullOrEmpty(Style))
+        {
+            // If user provided style, merge naively (user may override)
+            if (attrs.TryGetValue("style", out var userStyleObj) && userStyleObj is string userStyle && !string.IsNullOrEmpty(userStyle))
+                attrs["style"] = $"{userStyle};{Style}";
+            else
+                attrs["style"] = Style;
+        }
+
+        // Core attributes
+        if (Item != null)
+        {
+            if (!string.IsNullOrEmpty(Item?.TriggerId)) attrs["id"] = Item.TriggerId;
+        }
+        
+        attrs["aria-expanded"] = Item?.IsOpen == true ? "true" : "false";
+        if (Item?.HasContent == true && !string.IsNullOrEmpty(Item?.ContentId)) attrs["aria-controls"] = Item!.ContentId;
+        if (_isDisabled) attrs["aria-disabled"] = "true";
+        attrs["tabindex"] = (Root?.GetTabIndex(this) ?? 0).ToString();
+        attrs["data-state"] = Item?.IsOpen == true ? "open" : "closed";
+        if (_isDisabled) attrs["data-disabled"] = "true";
+        if (Root != null) attrs["data-orientation"] = Root.Orientation.ToString().ToLowerInvariant();
+        if (_isDisabled) attrs["disabled"] = true;
+
+        // Forward event callbacks so child elements using @attributes can wire them
+        attrs["onclick"] = EventCallback.Factory.Create<MouseEventArgs>(this, HandleClick);
+        attrs["onfocus"] = EventCallback.Factory.Create<FocusEventArgs>(this, HandleFocus);
+        attrs["onkeydown"] = EventCallback.Factory.Create<KeyboardEventArgs>(this, HandleKeyDown);
+
+        return attrs;
     }
 }

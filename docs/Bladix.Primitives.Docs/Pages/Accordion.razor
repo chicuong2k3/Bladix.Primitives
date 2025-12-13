@@ -221,7 +221,8 @@
                         <span>Tab 1</span>
                     </AccordionTrigger>
                 </AccordionHeader>
-                <AccordionContent class="accordion-content">
+                <!-- keep content mounted to avoid remount when switching tabs -->
+                <AccordionContent class="accordion-content" UnmountOnClose="false">
                     <div class="accordion-content-inner">
                         Content for Tab 1. Use Arrow Left/Right to navigate between tabs.
                     </div>
@@ -234,7 +235,7 @@
                         <span>Tab 2</span>
                     </AccordionTrigger>
                 </AccordionHeader>
-                <AccordionContent class="accordion-content">
+                <AccordionContent class="accordion-content" UnmountOnClose="false">
                     <div class="accordion-content-inner">
                         Content for Tab 2. Horizontal orientation is great for tab-like interfaces.
                     </div>
@@ -247,7 +248,7 @@
                         <span>Tab 3</span>
                     </AccordionTrigger>
                 </AccordionHeader>
-                <AccordionContent class="accordion-content">
+                <AccordionContent class="accordion-content" UnmountOnClose="false">
                     <div class="accordion-content-inner">
                         Content for Tab 3. Home and End keys still work to jump to first/last.
                     </div>
@@ -268,7 +269,7 @@
                         <span>علامة التبويب 1</span>
                     </AccordionTrigger>
                 </AccordionHeader>
-                <AccordionContent class="accordion-content">
+                <AccordionContent class="accordion-content" UnmountOnClose="false">
                     <div class="accordion-content-inner">
                         محتوى علامة التبويب 1. In RTL mode, arrow key directions are reversed.
                     </div>
@@ -281,7 +282,7 @@
                         <span>علامة التبويب 2</span>
                     </AccordionTrigger>
                 </AccordionHeader>
-                <AccordionContent class="accordion-content">
+                <AccordionContent class="accordion-content" UnmountOnClose="false">
                     <div class="accordion-content-inner">
                         محتوى علامة التبويب 2. Arrow Right moves to previous, Arrow Left moves to next.
                     </div>
@@ -294,7 +295,7 @@
                         <span>علامة التبويب 3</span>
                     </AccordionTrigger>
                 </AccordionHeader>
-                <AccordionContent class="accordion-content">
+                <AccordionContent class="accordion-content" UnmountOnClose="false">
                     <div class="accordion-content-inner">
                         محتوى علامة التبويب 3. Full RTL support for Arabic, Hebrew, and other RTL languages.
                     </div>
@@ -302,6 +303,32 @@
             </AccordionItem>
         </AccordionRoot>
     </section>
+
+    <!-- New Example: AsChild wrapper -->
+        <h2>7. AsChild wrapper example</h2>
+        <p>
+            When using <code>AsChild</code>, primitives forward ARIA/data attributes to your markup.
+            To allow the primitive to attach JS (keyboard) handlers it needs the real <code>ElementReference</code>.
+            The child can obtain the parent via a <code>CascadingParameter</code> and call <code>SetElementRef</code>.
+        </p>
+
+        <p><strong>Live demo using the included wrapper component:</strong></p>
+
+        <AccordionRoot Type="AccordionType.Single" class="accordion">
+            <AccordionItem Value="aschild-1" class="accordion-item">
+                <AccordionHeader class="accordion-header">
+                    <AccordionTrigger AsChild="true">
+                    
+                    </AccordionTrigger>
+                </AccordionHeader>
+
+                <AccordionContent class="accordion-content">
+                    <div class="accordion-content-inner">
+                        This trigger is rendered by a child wrapper that forwards the @@ref back to the primitive.
+                    </div>
+                </AccordionContent>
+            </AccordionItem>
+        </AccordionRoot>
 </div>
 
 <style>
@@ -364,18 +391,22 @@
     .accordion-content {
         overflow: hidden;
         font-size: 14px;
-        transition: all 0.3s ease-in-out;
+        opacity: 1;
+        /* prefer JS-managed height; CSS provides sensible defaults for opacity */
+        transition: opacity 180ms ease;
+        will-change: height, opacity;
+        box-sizing: border-box; /* ensure padding included when JS measures scrollHeight */
     }
 
-        .accordion-content[data-state="closed"] {
-            max-height: 0;
-            opacity: 0;
-        }
+    .accordion-content[data-state="closed"] {
+        opacity: 0;
+        pointer-events: none;
+    }
 
-        .accordion-content[data-state="open"] {
-            max-height: 500px;
-            opacity: 1;
-        }
+    .accordion-content[data-state="open"] {
+        opacity: 1;
+        pointer-events: auto;
+    }
 
     .accordion-content-inner {
         padding: 1rem;

@@ -3,7 +3,14 @@
 @if (AsChild)
 {
     <CascadingValue Value="this" IsFixed="true">
-        @ChildContent
+        @if (ChildContentWithAttributes != null)
+        {
+            @ChildContentWithAttributes(BuildSplatAttributes())
+        }
+        else
+        {
+            @ChildContent
+        }
     </CascadingValue>
 }
 else
@@ -95,33 +102,26 @@ else
     {
         if (Disabled) return;
 
-        // Controlled vs uncontrolled:
-        // - If Value != null -> controlled: compute new payload and only emit OnValueChange (do not mutate internal state)
-        // - If Value == null -> uncontrolled: update internal state and emit OnValueChange for consumers if they listen
         bool isControlled = Value != null;
 
         if (Type == AccordionType.Single)
         {
             if (isControlled)
             {
-                // derive current value from Value
                 var current = ToStringEnumerable(Value).FirstOrDefault();
                 if (string.Equals(current, itemValue, StringComparison.Ordinal))
                 {
-                    // item is open -> attempt to close if collapsible
                     if (Collapsible)
                         await OnValueChange.InvokeAsync(null);
                 }
                 else
                 {
-                    // open requested
                     await OnValueChange.InvokeAsync(itemValue);
                 }
 
                 return;
             }
 
-            // Uncontrolled: mutate internal state
             if (_openItems.Contains(itemValue, StringComparer.Ordinal))
             {
                 if (Collapsible)
@@ -140,7 +140,6 @@ else
         }
         else
         {
-            // Multiple
             if (isControlled)
             {
                 var current = ToStringEnumerable(Value).ToList();
@@ -153,7 +152,6 @@ else
                 return;
             }
 
-            // Uncontrolled: mutate internal state
             if (_openItems.Contains(itemValue, StringComparer.Ordinal))
                 _openItems.RemoveAll(s => string.Equals(s, itemValue, StringComparison.Ordinal));
             else
@@ -171,7 +169,6 @@ else
         if (!_triggers.Contains(trigger))
             _triggers.Add(trigger);
 
-        // initialize the tabbable trigger to the first non-disabled trigger
         if (_tabbableTrigger == null && !trigger.IsDisabled)
         {
             _tabbableTrigger = trigger;
@@ -225,8 +222,15 @@ else
 
     public int GetTabIndex(AccordionTrigger trigger)
     {
-        // default to 0 when no root (e.g., AsChild) so element remains tabbable
-        if (_tabbableTrigger == null) return 0;
+        // If no explicit tabbable trigger is set yet, fall back to the first non-disabled trigger.
+        // This helps ensure a sensible initial tabindex during first interactive render/hydration.
+        if (_tabbableTrigger == null)
+        {
+            var first = GetFirstTrigger();
+            if (first == null) return -1;
+            return first == trigger ? 0 : -1;
+        }
+
         return _tabbableTrigger == trigger ? 0 : -1;
     }
 
@@ -237,7 +241,6 @@ else
             return _openItems.FirstOrDefault();
         }
 
-        // Multiple: preserve insertion order and unique values
         return _openItems.ToArray();
     }
 
@@ -259,7 +262,6 @@ else
         switch (value)
         {
             case string s:
-                // treat a single string as a single value (do NOT split by comma)
                 if (!string.IsNullOrEmpty(s)) yield return s;
                 yield break;
 
@@ -284,5 +286,47 @@ else
                 if (!string.IsNullOrEmpty(strDefault)) yield return strDefault;
                 yield break;
         }
+    }
+
+    // --- New: AsChild helpers to match Radix expectations ---
+
+    // Allow a child element to pass back the ElementReference when AsChild is used.
+    public void SetElementRef(ElementReference elementRef)
+    {
+        ElementRef = elementRef;
+    }
+
+    // Build attribute dictionary for AsChild so the child receives data-orientation, class/style merged, etc.
+    private Dictionary<string, object> BuildSplatAttributes()
+    {
+        var attrs = new Dictionary<string, object>(AdditionalAttributes ?? new Dictionary<string, object>());
+
+        // Merge class attribute: preserve both component Class and user-provided class
+        if (attrs.TryGetValue("class", out var userClassObj) && userClassObj is string userClass && !string.IsNullOrEmpty(userClass))
+        {
+            attrs["class"] = string.IsNullOrEmpty(Class) ? userClass : $"{Class} {userClass}";
+        }
+        else if (!string.IsNullOrEmpty(Class))
+        {
+            attrs["class"] = Class;
+        }
+
+        // Merge style
+        if (!string.IsNullOrEmpty(Style))
+        {
+            if (attrs.TryGetValue("style", out var userStyleObj) && userStyleObj is string userStyle && !string.IsNullOrEmpty(userStyle))
+                attrs["style"] = $"{userStyle};{Style}";
+            else
+                attrs["style"] = Style;
+        }
+
+        // Core attributes to forward
+        attrs["data-orientation"] = Orientation.ToString().ToLowerInvariant();
+        attrs["data-bladix-accordion"] = "true";
+
+        // We do not set @ref here (Blazor doesn't support passing @ref via attribute splatting).
+        // Child should call CascadingParameter to get this root and call SetElementRef(myRef) in its OnAfterRenderAsync.
+
+        return attrs;
     }
 }
