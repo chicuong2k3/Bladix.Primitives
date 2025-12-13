@@ -13,6 +13,7 @@
   <Folder Name="/src/">
     <Project Path="docs/Bladix.Primitives.Docs/Bladix.Primitives.Docs.csproj" Id="8e026539-18e1-4f35-8721-5b0d055f0935" />
     <Project Path="src/Bladix.Primitives/Bladix.Primitives.csproj" />
+    <Project Path="src/Bladix.Themes/Bladix.Themes.csproj" Id="4ddbc493-fd21-4560-aaec-d23ac179a1aa" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Bladix.Primitives.Components.Tests/Bladix.Primitives.Components.Tests.csproj" Id="9b793bd8-b557-40f2-92d1-d816bfcfef2a" />

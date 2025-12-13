@@ -1,0 +1,152 @@
+@inherits BladixLayoutBase
+
+@{
+    var tag = string.IsNullOrWhiteSpace(As) ? "div" : As!;
+    var mergedClass = MergeClassAttribute();
+    var inlineStyle = BuildInlineStyle();
+    var attributes = BuildAttributes(mergedClass, inlineStyle);
+}
+
+@if (AsChild)
+{
+    @ChildContent
+}
+else
+{
+    @RenderElement(tag, attributes)
+}
+
+@code {
+    [Parameter] public string? As { get; set; }
+
+    private RenderFragment RenderElement(string tagName, IReadOnlyDictionary<string, object> attrs) => builder =>
+    {
+        builder.OpenElement(0, tagName);
+
+        if (attrs != null)
+        {
+            foreach (var kv in attrs)
+            {
+                builder.AddAttribute(1, kv.Key, kv.Value);
+            }
+        }
+
+        builder.AddElementReferenceCapture(2, er => ElementRef = er);
+
+        if (ChildContent != null)
+            builder.AddContent(3, ChildContent);
+
+        builder.CloseElement();
+    };
+
+    private string MergeClassAttribute()
+    {
+        // base class for theming / identification
+        var baseClass = "rt-Box";
+
+        // class passed via BladixComponentBase.Class
+        var userClass = Class ?? string.Empty;
+
+        var additionalClass = string.Empty;
+        if (AdditionalAttributes != null && AdditionalAttributes.TryGetValue("class", out var oc))
+            additionalClass = oc?.ToString() ?? string.Empty;
+
+        var parts = new[] { baseClass, userClass, additionalClass }
+            .Where(s => !string.IsNullOrWhiteSpace(s))
+            .Select(s => s!.Trim());
+
+        return string.Join(" ", parts);
+    }
+
+    private string BuildInlineStyle()
+    {
+        var sb = new System.Text.StringBuilder();
+
+        void Append(string name, string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value)) return;
+            sb.Append(name).Append(':').Append(value).Append(';');
+        }
+
+        // Padding shorthands (P, Px, Py, Pt, Pr, Pb, Pl)
+        if (!string.IsNullOrWhiteSpace(P)) Append("padding", P);
+        if (!string.IsNullOrWhiteSpace(Px)) Append("padding-left", Px);
+        if (!string.IsNullOrWhiteSpace(Px)) Append("padding-right", Px);
+        if (!string.IsNullOrWhiteSpace(Py)) Append("padding-top", Py);
+        if (!string.IsNullOrWhiteSpace(Py)) Append("padding-bottom", Py);
+        if (!string.IsNullOrWhiteSpace(Pt)) Append("padding-top", Pt);
+        if (!string.IsNullOrWhiteSpace(Pr)) Append("padding-right", Pr);
+        if (!string.IsNullOrWhiteSpace(Pb)) Append("padding-bottom", Pb);
+        if (!string.IsNullOrWhiteSpace(Pl)) Append("padding-left", Pl);
+
+        // Dimensions
+        Append("width", Width);
+        Append("min-width", MinWidth);
+        Append("max-width", MaxWidth);
+        Append("height", Height);
+        Append("min-height", MinHeight);
+        Append("max-height", MaxHeight);
+
+        // Positioning
+        Append("position", Position);
+        Append("inset", Inset);
+        Append("top", Top);
+        Append("right", Right);
+        Append("bottom", Bottom);
+        Append("left", Left);
+
+        // Overflow & flex/grid
+        Append("overflow", Overflow);
+        Append("overflow-x", OverflowX);
+        Append("overflow-y", OverflowY);
+        Append("flex-basis", FlexBasis);
+        Append("flex-shrink", FlexShrink);
+        Append("flex-grow", FlexGrow);
+        Append("grid-area", GridArea);
+        Append("grid-column", GridColumn);
+        Append("grid-column-start", GridColumnStart);
+        Append("grid-column-end", GridColumnEnd);
+        Append("grid-row", GridRow);
+        Append("grid-row-start", GridRowStart);
+        Append("grid-row-end", GridRowEnd);
+
+        // If caller supplied Style, append it (allow overriding the above)
+        if (!string.IsNullOrWhiteSpace(Style))
+        {
+            // ensure trailing semicolon
+            var style = Style!.Trim();
+            if (!style.EndsWith(";")) style += ";";
+            sb.Append(style);
+        }
+
+        return sb.ToString();
+    }
+
+    private IReadOnlyDictionary<string, object> BuildAttributes(string mergedClass, string inlineStyle)
+    {
+        var dict = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+
+        if (AdditionalAttributes != null)
+        {
+            foreach (var kv in AdditionalAttributes)
+            {
+                var key = kv.Key;
+                if (string.Equals(key, "class", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(key, "style", StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                dict[key] = kv.Value!;
+            }
+        }
+
+        // set merged class
+        if (!string.IsNullOrWhiteSpace(mergedClass))
+            dict["class"] = mergedClass.Trim();
+
+        // set inline style if any
+        if (!string.IsNullOrWhiteSpace(inlineStyle))
+            dict["style"] = inlineStyle.Trim();
+
+        return dict;
+    }
+}
